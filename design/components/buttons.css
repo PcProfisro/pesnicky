@@ -1,0 +1,115 @@
+/* ──────────────────────────────────────────────────────────────────────
+   eduAlf — Button styles (CSS variant, framework-free)
+
+   Použiteľné v ľubovoľnej aplikácii. Vyžaduje `tokens.css`.
+   ────────────────────────────────────────────────────────────────────── */
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+.eda-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-base);
+  line-height: 1;
+  padding: var(--space-3) var(--space-5);
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--easing-spring),
+              filter    var(--duration-fast) var(--easing-default),
+              box-shadow var(--duration-fast) var(--easing-default);
+  user-select: none;
+}
+
+.eda-btn:hover { transform: scale(1.04); filter: brightness(1.05); }
+.eda-btn:active { transform: scale(0.98); }
+.eda-btn:focus-visible {
+  outline: 3px solid var(--color-orange-700);
+  outline-offset: 2px;
+}
+.eda-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.3);
+}
+
+/* ── Variants ──────────────────────────────────────────────────────── */
+.eda-btn--primary {
+  background: var(--button-backgroundColor--primary);
+  color: var(--button-textColor--primary);
+  box-shadow: var(--shadow-md);
+}
+.eda-btn--secondary {
+  background: var(--button-backgroundColor--secondary);
+  color: var(--button-textColor--secondary);
+  box-shadow: var(--shadow-sm);
+}
+.eda-btn--danger {
+  background: var(--button-backgroundColor--danger);
+  color: var(--button-textColor--danger);
+  box-shadow: var(--shadow-md);
+}
+.eda-btn--ghost {
+  background: transparent;
+  color: var(--textColor);
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────── */
+.eda-btn--sm { font-size: var(--text-sm); padding: var(--space-2) var(--space-4); }
+.eda-btn--lg { font-size: var(--text-lg); padding: var(--space-4) var(--space-6); }
+
+/* ── Icon button (square) ──────────────────────────────────────────── */
+.eda-icon-btn {
+  width: 32px;       /* size-8 */
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--duration-fast) var(--easing-default),
+              filter    var(--duration-fast) var(--easing-default);
+}
+.eda-icon-btn:hover { transform: scale(1.05); filter: brightness(1.10); }
+.eda-icon-btn--sm { width: 24px; height: 24px; }       /* size-6 — mobile */
+.eda-icon-btn--lg { width: 40px; height: 40px; }
+.eda-icon-btn--danger {
+  background: var(--color-red-700);
+  color: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+}
+
+/* ── Round tool button (omaľovánka štýl) ───────────────────────────── */
+.eda-tool-btn {
+  width: 88px;
+  height: 88px;
+  background: var(--paperColor);
+  color: var(--textColor);
+  border: 2px solid var(--borderColor);
+  border-radius: var(--radius-3xl);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-fast) var(--easing-spring);
+  padding: 0;
+}
+.eda-tool-btn:hover { transform: translateY(-2px); }
+.eda-tool-btn--active {
+  background: var(--primaryColor);
+  color: var(--paperColor);
+  border-color: transparent;
+  box-shadow: var(--shadow-lg);
+}
+.eda-tool-btn--danger.eda-tool-btn--active {
+  background: var(--color-red-700);
+}

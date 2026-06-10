@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="sk" class="theme-basic">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hudobné dlaždice — eduAlf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap&subset=latin,latin-ext" rel="stylesheet">
+<link rel="stylesheet" href="design/tokens.css">
+<link rel="stylesheet" href="design/components/top-toolbar.css">
+<link rel="stylesheet" href="design/components/buttons.css">
+<style>
+  :root{
+    /* herné akcenty (zladené s eduAlf paletou) */
+    --ink: var(--textColor);            /* brand modrá #085475 */
+    --pink:#f5c6d6;
+    --green:#cde8a8;
+    --yellow:#f7dd8e;
+    --peach:#fbcfa6;
+    --lilac:#dcc8ee;
+    --sky:#bfe0ef;
+    --shadow: var(--shadow-lg);
+    --toolbar-h: 60px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:var(--font-family-sans);
+    color:var(--ink);
+    background:
+      radial-gradient(125% 90% at 50% 0%, var(--color-blue-200) 0%, var(--color-blue-300) 100%);
+    overflow:hidden;
+    touch-action:manipulation;
+    user-select:none;
+  }
+
+  /* ---------- jemné dekorácie na pozadí ---------- */
+  .scenery{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .cloud{position:absolute;background:#fff;border-radius:100px;opacity:.7;filter:blur(.3px);}
+  .cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:100px;}
+  .hill{position:absolute;left:-5%;right:-5%;bottom:-8%;height:26%;border-radius:50% 50% 0 0;}
+  .hill.back{background:#e7f0d4;bottom:-12%;height:30%;}
+  .hill.front{background:#dcecc1;}
+
+  /* ---------- herná plocha ---------- */
+  #stage{position:fixed;inset:0;z-index:1;display:none;}
+  #lanes{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);display:flex;
+    background:rgba(255,255,255,.22);box-shadow:0 0 0 2px rgba(255,255,255,.35);}
+  .lane{position:relative;flex:1;height:100%;}
+  .lane + .lane{box-shadow:inset 1px 0 0 rgba(170,150,120,.18);}
+
+  .tile{position:absolute;left:0;width:100%;will-change:transform;pointer-events:none;}
+  .tile .art{
+    position:relative;margin:0 auto;pointer-events:auto;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .18s ease, opacity .35s ease;
+  }
+  .tile svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 14px rgba(150,120,90,.22));}
+  /* čierne klávesy (štýl Klávesy) */
+  .art.key{border-radius:14px;background:linear-gradient(180deg,#3b3b46 0%,#23232c 60%,#191920 100%);
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.4), 0 9px 16px rgba(60,50,40,.28);}
+  .tile.pop .art.key{background:linear-gradient(180deg,#d8efb4,#a8cf72);box-shadow:0 0 0 4px rgba(168,207,114,.4);}
+  .tile.pop .art{animation:pop .42s cubic-bezier(.2,1.4,.5,1) forwards;}
+  .tile.miss .art{animation:fade .5s ease forwards;}
+  @keyframes pop{0%{transform:scale(1);}35%{transform:scale(1.22);}100%{transform:scale(.5);opacity:0;}}
+  @keyframes fade{to{transform:scale(.82) translateY(18px);opacity:0;}}
+
+  /* ---------- eduAlf horný toolbar (app chrome) ---------- */
+  .eda-toolbar{
+    position:fixed;top:0;left:0;right:0;z-index:60;
+    background:var(--paperColor);
+    border-bottom:0;border-image:none;
+    box-shadow:0 2px 10px rgba(8,84,117,.08);
+  }
+  .eda-toolbar::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(to right,transparent 0%,var(--textColor) 35%,var(--textColor) 65%,transparent 100%);
+    opacity:.5;pointer-events:none;
+  }
+  /* väčší dotykový terč pre škôlkára */
+  .eda-toolbar .eda-icon-btn{
+    width:44px;height:44px;border-radius:var(--radius-lg);
+  }
+  .eda-toolbar .eda-icon-btn svg{width:30px;height:30px;display:block;}
+  .eda-toolbar .eda-icon-btn--danger{width:44px;height:44px;padding:9px;}
+  .eda-toolbar .eda-icon-btn--danger svg{width:24px;height:24px;}
+  .eda-toolbar .eda-icon-btn:hover{background:var(--tonedPaperColor);}
+  .eda-toolbar .eda-icon-btn--danger:hover{background:var(--color-red-700);filter:brightness(1.08);}
+  .eda-toolbar__center span{letter-spacing:.04em;}
+  @media (max-width:680px){
+    .eda-toolbar{padding:var(--space-1) var(--space-4);font-size:var(--text-xl);gap:var(--space-3);}
+    .eda-toolbar__left img{height:38px;}
+    .eda-toolbar__center span{font-size:var(--text-lg);}
+  }
+  @media (max-width:420px){
+    .eda-toolbar__left{display:none;}
+  }
+
+  /* ---------- horná lišta hry (pod toolbarom) ---------- */
+  .topbar{position:absolute;top:calc(var(--toolbar-h) + 10px);left:0;right:0;z-index:5;display:flex;
+    justify-content:space-between;align-items:flex-start;padding:14px 20px;pointer-events:none;}
+  .topbar button{pointer-events:auto;}
+
+  .score{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:var(--paperColor);border-radius:24px;padding:8px 16px 6px;
+    box-shadow:var(--shadow);
+  }
+  .gtime{
+    font-variant-numeric:tabular-nums;font-weight:700;
+    font-size:clamp(13px,2.2vw,16px);color:var(--descriptionColor);
+    letter-spacing:.02em;line-height:1;
+  }
+  .starrow{display:flex;align-items:center;gap:6px;}
+  .starrow .slot{width:clamp(28px,4.4vw,40px);height:clamp(28px,4.4vw,40px);display:block;}
+  .starrow .slot path{fill:#e3ecf0;stroke:#cdd9df;stroke-width:1;transition:none;}
+  .starrow .slot.on path{fill:var(--color-orange-700);stroke:#d99500;}
+  .starrow .slot.pop{animation:starpop .42s cubic-bezier(.2,1.5,.4,1);}
+  @keyframes starpop{0%{transform:scale(.4) rotate(-20deg);}55%{transform:scale(1.3) rotate(8deg);}100%{transform:scale(1) rotate(0);}}
+  .starrow.cheer .slot{animation:bump .55s ease;}
+  /* pauza – nazbierané hviezdičky graficky */
+  .pausestars{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:340px;margin:6px auto 24px;}
+  .pausestars svg{width:44px;height:44px;}
+  .pausestars .more{font-size:30px;color:var(--color-orange-700);font-weight:700;align-self:center;}
+  @keyframes bump{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
+
+  /* indikátor postupu v pesničke */
+  .progress{flex:1;display:flex;align-items:center;gap:12px;align-self:center;
+    max-width:560px;margin:0 18px;pointer-events:none;}
+  .track{position:relative;flex:1;height:14px;border-radius:30px;background:rgba(255,255,255,.75);
+    box-shadow:inset 0 1px 3px rgba(150,120,90,.2), 0 2px 6px rgba(150,120,90,.12);}
+  .fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:30px;
+    background:linear-gradient(90deg,var(--color-blue-800),var(--color-green-300) 70%,var(--color-orange-700));}
+  .bead{position:absolute;top:50%;left:0%;width:26px;height:26px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffffff, #cde8a8 60%, #9bc36a);
+    box-shadow:0 4px 10px rgba(150,120,90,.3), inset 0 -2px 3px rgba(120,150,80,.4);
+    transform:translate(-50%,-50%);border:2px solid #fff;}
+  .finish{position:absolute;right:-7px;top:50%;transform:translateY(-50%);}
+  .finish svg{width:30px;height:30px;display:block;}
+  .progress.done .bead{animation:bump .55s ease;}
+  .progress.done .finish{animation:bump .55s ease;}
+
+  .iconbtn{
+    border:none;background:var(--paperColor);border-radius:50%;
+    width:clamp(54px,8vw,64px);height:clamp(54px,8vw,64px);aspect-ratio:1;
+    box-shadow:var(--shadow);cursor:pointer;font-size:clamp(24px,4vw,30px);
+    display:flex;align-items:center;justify-content:center;color:var(--primaryColor);
+    transition:transform .12s ease;position:relative;overflow:hidden;
+    background:conic-gradient(var(--textColor) calc(var(--p,0) * 1%), var(--paperColor) 0);
+  }
+  .iconbtn .ico{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
+    width:82%;aspect-ratio:1;height:auto;border-radius:50%;background:var(--paperColor);
+    box-shadow:0 1px 4px rgba(8,84,117,.12);line-height:1;}
+  .iconbtn:active{transform:scale(.92);}
+
+  /* ---------- odpočítavanie pred štartom (kruhové stopky) ---------- */
+  .countdown{
+    position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);
+    transform:translateX(-50%);z-index:2;display:none;pointer-events:none;
+    width:104px;height:104px;border-radius:50%;
+    align-items:center;justify-content:center;
+    background:var(--paperColor);border:5px solid var(--primaryColor);
+    box-shadow:var(--shadow);
+  }
+  .countdown.show{display:flex;}
+  .countdown::before{
+    content:"";position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+    width:20px;height:11px;border-radius:5px 5px 3px 3px;
+    background:var(--primaryColor);box-shadow:0 -3px 0 -1px var(--primaryColor);
+  }
+  .countdown .cnum{
+    font-variant-numeric:tabular-nums;font-weight:900;line-height:1;
+    font-size:48px;color:var(--primaryColor);letter-spacing:-.01em;
+  }
+  .countdown .cnum.tick{animation:cdpop .4s cubic-bezier(.2,1.4,.5,1);}
+  @keyframes cdpop{0%{transform:scale(.55);opacity:.4;}55%{transform:scale(1.12);}100%{transform:scale(1);opacity:1;}}
+  .countdown.loading .cnum{display:none;}
+  .countdown.loading::after{
+    content:"";width:34px;height:34px;border-radius:50%;
+    border:5px solid color-mix(in srgb,var(--primaryColor) 25%,transparent);
+    border-top-color:var(--primaryColor);animation:cdspin .8s linear infinite;
+  }
+  @keyframes cdspin{to{transform:rotate(360deg);}}
+
+  /* ---------- menu / úvod ---------- */
+  .overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:calc(var(--toolbar-h) + 24px) 24px 24px;overflow-y:auto;}
+  .overlay .card{margin:auto;}
+  .card{
+    background:var(--paperColor);border-radius:32px;box-shadow:var(--shadow-xl);
+    padding:clamp(28px,5vw,52px);width:min(680px,94vw);text-align:center;
+  }
+  .title{font-weight:900;line-height:1.02;font-size:clamp(40px,8vw,76px);margin:0 0 6px;letter-spacing:-.01em;}
+  .title .a{color:var(--primaryColor);}.title .b{color:var(--color-green-300);}.title .c{color:var(--color-orange-700);}
+  .subtitle{font-size:clamp(18px,3.2vw,24px);color:var(--descriptionColor);margin:0 0 26px;font-weight:500;}
+
+  .group{margin:18px 0;}
+  .group h3{font-size:clamp(17px,2.8vw,21px);font-weight:700;color:var(--descriptionColor);margin:0 0 12px;}
+  .choices{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .choice{
+    border:3px solid var(--borderColor);background:var(--paperColor);border-radius:26px;cursor:pointer;
+    padding:16px 22px;min-width:120px;min-height:96px;font-family:inherit;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    font-size:clamp(17px,2.8vw,21px);font-weight:700;transition:transform .12s ease,border-color .15s ease,background .15s ease;
+  }
+  .choice:active{transform:scale(.95);}
+  .choice.sel{border-color:var(--primaryColor);background:var(--tonedPaperColor);}
+  .choice .glyph{font-size:34px;line-height:1;}
+  .choice svg{width:46px;height:46px;}
+
+  .play{
+    display:flex;align-items:center;justify-content:center;gap:.35em;
+    width:fit-content;max-width:100%;margin:30px auto 0;border:none;cursor:pointer;font-family:inherit;font-weight:900;
+    font-size:clamp(26px,5vw,40px);color:#fff;border-radius:60px;
+    padding:clamp(18px,3vw,26px) clamp(40px,8vw,72px);
+    background:linear-gradient(180deg,#8ed05a,var(--color-green-300));
+    box-shadow:0 14px 0 #5a9636, 0 22px 30px rgba(122,195,72,.4);
+    transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .play:active{transform:translateY(8px);box-shadow:0 6px 0 #5a9636,0 10px 18px rgba(122,195,72,.4);}
+  .play .pico{font-size:.9em;}
+
+  /* sekundárne tlačidlo (rovnaká veľkosť, tlmená farba) */
+  .play.secondary{
+    margin-top:16px;color:var(--descriptionColor);
+    background:var(--paperColor);
+    box-shadow:0 14px 0 var(--borderColor), 0 22px 30px rgba(8,84,117,.12);
+  }
+  .play.secondary:active{transform:translateY(8px);box-shadow:0 6px 0 var(--borderColor),0 10px 18px rgba(8,84,117,.12);}
+
+  .hint{margin-top:18px;font-size:clamp(14px,2.4vw,17px);color:var(--descriptionColor);font-weight:500;}
+
+  /* vlastná pesnička */
+  .songbox{margin-top:24px;padding-top:22px;border-top:2px solid #f1e8dc;
+    display:flex;flex-direction:column;gap:14px;align-items:stretch;}
+  .songlabel{font-size:14px;font-weight:700;color:var(--descriptionColor);text-align:left;}
+  #songUrl{font-family:inherit;font-size:16px;color:var(--ink);border:2px solid var(--borderColor);
+    border-radius:14px;padding:13px 16px;background:var(--paperColor);width:100%;}
+  #songUrl:focus{outline:none;border-color:var(--primaryColor);}
+  .songhead{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .songrow{display:flex;align-items:center;gap:12px;}
+  .songselect{flex:1;font-family:inherit;font-weight:700;color:var(--ink);
+    font-size:clamp(17px,2.8vw,21px);border:3px solid var(--borderColor);border-radius:18px;
+    padding:14px 18px;background:var(--paperColor);cursor:pointer;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23085475' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 16px center;padding-right:48px;}
+  .songselect:focus{outline:none;border-color:var(--primaryColor);}
+  .refreshbtn{border:3px solid var(--borderColor);background:var(--paperColor);border-radius:50%;width:54px;height:54px;
+    cursor:pointer;font-size:24px;color:var(--descriptionColor);display:flex;align-items:center;justify-content:center;
+    flex:none;transition:transform .2s,border-color .15s,color .15s;}
+  .refreshbtn:hover{border-color:var(--primaryColor);color:var(--primaryColor);}
+  .refreshbtn:active{transform:rotate(180deg);}
+  .play.small{font-size:clamp(18px,3.4vw,24px);padding:14px 26px;box-shadow:0 9px 0 #5a9636,0 14px 20px rgba(122,195,72,.34);}
+  .play.small:active{transform:translateY(6px);box-shadow:0 3px 0 #5a9636;}
+  #songStatus a{color:var(--primaryColor);font-weight:700;}
+
+  /* pauza prekrytie */
+  #pause{display:none;background:rgba(234,246,249,.82);backdrop-filter:blur(4px);}
+  #pause .card{width:min(440px,92vw);}
+
+  /* iskričky pri trafení */
+  #fx{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden;}
+
+  /* oslavné konfety na konci pesničky (GIF v strede, opakuje sa) */
+  #confetti{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(46vmin,360px);height:auto;z-index:8;pointer-events:none;display:none;
+    mix-blend-mode:multiply;}
+  #confetti.show{display:block;animation:confettiIn .4s cubic-bezier(.2,1.4,.5,1);}
+  @keyframes confettiIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+  .spark{position:absolute;will-change:transform,opacity;animation:spark .7s ease-out forwards;}
+  @keyframes spark{
+    0%{transform:translate(-50%,-50%) scale(.2) rotate(0);opacity:1;}
+    100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--rot));opacity:0;}
+  }
+
+  @media (max-width:520px){
+    .card{border-radius:32px;}
+    .choices{gap:10px;}
+    .choice{min-width:104px;padding:12px 14px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- eduAlf horný toolbar -->
+<header class="eda-toolbar" data-screen-label="toolbar">
+  <div class="eda-toolbar__left">
+    <img src="design/logo/logo-edualf-light.svg" alt="eduAlf">
+  </div>
+  <div class="eda-toolbar__center">
+    <span id="toolbarTitle">PESNIČKY PRE DETI</span>
+  </div>
+  <div class="eda-toolbar__right">
+    <button class="eda-icon-btn" id="soundBtn" aria-label="Zvuk"></button>
+    <button class="eda-icon-btn" id="fsBtn" aria-label="Celá obrazovka">
+      <svg viewBox="0 0 24 24" width="30" height="30"><defs><g id="fsArrow"><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="var(--paperColor,#fff)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></defs><use href="#fsArrow" style="transform: rotate(90deg) translate(12.5px, 4.5px); transform-origin: 16px 8px"></use><use href="#fsArrow" style="transform: rotate(-90deg) translate(4.5px, 12.5px); transform-origin: 8px 16px"></use></svg>
+    </button>
+    <button class="eda-icon-btn eda-icon-btn--danger" id="closeBtn" aria-label="Späť do menu">
+      <svg viewBox="0 0 29 29" width="24" height="24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.4125 14.2022L6.48107 8.27086C6.1511 7.9409 5.96582 7.49337 5.96582 7.02673C5.96582 6.56009 6.1511 6.11257 6.48107 5.7826C6.81103 5.45264 7.25856 5.26727 7.7252 5.26727C8.19183 5.26727 8.63936 5.45264 8.96933 5.7826L14.9008 11.714L20.8309 5.7826C21.1608 5.45264 21.6084 5.26727 22.075 5.26727C22.5416 5.26727 22.9892 5.45264 23.3191 5.7826C23.6491 6.11257 23.8344 6.56009 23.8344 7.02673C23.8344 7.49337 23.6491 7.9409 23.3191 8.27086L17.3877 14.2022L23.3191 20.1336C23.6491 20.4636 23.8344 20.9111 23.8344 21.3778C23.8344 21.8444 23.6491 22.2919 23.3191 22.6219C22.9892 22.9519 22.5416 23.1372 22.075 23.1372C21.6084 23.1372 21.1608 22.9519 20.8309 22.6219L14.9008 16.6905L8.96933 22.6219C8.63936 22.9519 8.19183 23.1372 7.7252 23.1372C7.25856 23.1372 6.81103 22.9519 6.48107 22.6219C6.1511 22.2919 5.96582 21.8444 5.96582 21.3778C5.96582 20.9111 6.1511 20.4636 6.48107 20.1336L12.4125 14.2022Z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</header>
+
+<div class="scenery" aria-hidden="true">
+  <div class="hill back"></div>
+  <div class="hill front"></div>
+</div>
+
+<!-- HERNÁ PLOCHA -->
+<div id="stage">
+  <div id="lanes"></div>
+  <div class="topbar">
+    <button class="iconbtn" id="homeBtn" aria-label="Domov / pauza"><span class="ico">⏸</span></button>
+    <div class="score" id="score" aria-label="Nazbierané hviezdičky">
+      <div class="starrow" id="starRow"></div>
+    </div>
+  </div>
+  <div class="countdown" id="countdown" aria-hidden="true">
+    <div class="cnum" id="countNum">3</div>
+  </div>
+</div>
+
+<div id="fx"></div>
+<img id="confetti" src="uploads/confetti.gif" alt="" aria-hidden="true">
+
+
+<audio id="songAudio" crossorigin="anonymous" loop></audio>
+<audio id="applauseAudio" src="uploads/applause.mp3" preload="auto"></audio>
+
+<!-- ÚVODNÉ MENU -->
+<div class="overlay" id="menu">
+  <div class="card">
+
+    <div class="group">
+      <h3>Vyber si pesničku 🎵</h3>
+      <div class="songrow">
+        <select id="songSelect" class="songselect"><option value="">Načítavam…</option></select>
+        <button class="refreshbtn" id="refreshSongs" title="Obnoviť zoznam">↻</button>
+      </div>
+      <p class="hint" id="songStatus"></p>
+    </div>
+
+    <button class="play" id="startBtn"><span class="pico">▶</span>ŠTART</button>
+  </div>
+</div>
+
+<!-- PAUZA -->
+<div class="overlay" id="pause">
+  <div class="card">
+    <h1 class="title" style="font-size:clamp(34px,7vw,56px)" id="pauseTitle"><span class="b">Pauza</span></h1>
+    <p class="subtitle" id="pauseScore" style="font-size:22px;color:#a99c8f">Tvoje hviezdičky:</p>
+    <div class="pausestars" id="pauseStars"></div>
+    <button class="play" id="resumeBtn"><span class="pico">▶</span>Pokračovať</button>
+    <button class="play secondary" id="toMenuBtn">Späť do menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ====================== MOTÍVY (jednoduché SVG) ====================== */
+  const PALETTE = ['#f5c6d6','#cde8a8','#f7dd8e','#fbcfa6','#dcc8ee','#bfe0ef'];
+  const darker = {'#f5c6d6':'#e79ab2','#cde8a8':'#a8cf72','#f7dd8e':'#e9c455',
+                  '#fbcfa6':'#eeac74','#dcc8ee':'#bda0db','#bfe0ef':'#8fc4dc'};
+
+  function apple(c){const d=darker[c];return `
+    <svg viewBox="0 0 100 100"><g>
+      <rect x="46" y="10" width="6" height="18" rx="3" fill="#a9805a"/>
+      <ellipse cx="64" cy="18" rx="13" ry="8" fill="#9bc36a" transform="rotate(20 64 18)"/>
+      <path d="M50 26c16 0 32 10 32 36 0 22-16 32-32 32S18 84 18 62c0-26 16-36 32-36z" fill="${c}"/>
+      <ellipse cx="38" cy="48" rx="8" ry="12" fill="#fff" opacity=".45"/>
+      <circle cx="40" cy="60" r="3.5" fill="${d}"/><circle cx="60" cy="60" r="3.5" fill="${d}"/>
+      <path d="M40 72q10 8 20 0" stroke="${d}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </g></svg>`;}
+
+  function balloon(c){const d=darker[c];return `
+    <svg viewBox="0 0 100 100"><g>
+      <path d="M50 80c0-3 0-5 0-7" stroke="${d}" stroke-width="2" fill="none"/>
+      <path d="M50 73l-5 7h10z" fill="${c}"/>
+      <ellipse cx="50" cy="40" rx="33" ry="38" fill="${c}"/>
+      <ellipse cx="38" cy="28" rx="9" ry="13" fill="#fff" opacity=".45"/>
+      <circle cx="42" cy="42" r="3.5" fill="${d}"/><circle cx="58" cy="42" r="3.5" fill="${d}"/>
+      <path d="M42 54q8 7 16 0" stroke="${d}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M50 80q-12 8 0 16" stroke="#cdbba6" stroke-width="2.5" fill="none"/>
+    </g></svg>`;}
+
+  function star(c){const d=darker[c];return `
+    <svg viewBox="0 0 100 100"><g>
+      <path d="M50 8l11 24 26 2.5-19.5 17.5L73 84 50 70 27 84l5.5-32L13 34.5 39 32z"
+        fill="${c}" stroke="${d}" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="43" cy="48" r="3.3" fill="${d}"/><circle cx="57" cy="48" r="3.3" fill="${d}"/>
+      <path d="M43 58q7 6 14 0" stroke="${d}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    </g></svg>`;}
+
+  function animal(c){const d=darker[c];return `
+    <svg viewBox="0 0 100 100"><g>
+      <circle cx="30" cy="28" r="13" fill="${c}"/><circle cx="70" cy="28" r="13" fill="${c}"/>
+      <circle cx="30" cy="28" r="6" fill="#fff" opacity=".5"/><circle cx="70" cy="28" r="6" fill="#fff" opacity=".5"/>
+      <circle cx="50" cy="55" r="36" fill="${c}"/>
+      <circle cx="38" cy="50" r="5" fill="${d}"/><circle cx="62" cy="50" r="5" fill="${d}"/>
+      <circle cx="28" cy="62" r="7" fill="#fff" opacity=".5"/><circle cx="72" cy="62" r="7" fill="#fff" opacity=".5"/>
+      <path d="M44 64h12l-6 6z" fill="${d}"/>
+      <path d="M40 72q10 9 20 0" stroke="${d}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </g></svg>`;}
+
+  function flower(c){const d=darker[c];return `
+    <svg viewBox="0 0 100 100"><g fill="${c}">
+      <circle cx="50" cy="22" r="15"/><circle cx="78" cy="42" r="15"/>
+      <circle cx="67" cy="74" r="15"/><circle cx="33" cy="74" r="15"/><circle cx="22" cy="42" r="15"/>
+      <circle cx="50" cy="50" r="20" fill="#fff2c4"/>
+      <circle cx="44" cy="48" r="3" fill="${d}"/><circle cx="56" cy="48" r="3" fill="${d}"/>
+      <path d="M44 56q6 5 12 0" stroke="${d}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g></svg>`;}
+
+  const MOTIFS = [apple, balloon, star, animal, flower];
+
+  /* ====================== AUDIO (Web Audio API) ====================== */
+  let actx=null;
+  let muted=false;
+
+  function ensureAudio(){
+    if(actx) return;
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+  }
+
+  // TRIANGEL "cinknutie" — krátky kovový zvuk pri trafení
+  function triangleDing(){
+    if(!actx||muted) return;
+    const t=actx.currentTime;
+    const partials=[2349, 3136, 4699, 6272]; // vysoké, mierne inharmonické
+    const out=actx.createGain();
+    out.gain.value=0.0001;
+    out.gain.setValueAtTime(0.5,t);
+    out.gain.exponentialRampToValueAtTime(0.0008,t+0.9);
+    out.connect(actx.destination);
+    partials.forEach((p,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type='sine'; o.frequency.value=p*(1+(Math.random()-.5)*0.004);
+      g.gain.value=[1,0.6,0.4,0.25][i];
+      o.connect(g).connect(out);
+      o.start(t); o.stop(t+0.95);
+    });
+  }
+
+  // POTLESK — prehrá nahraný súbor applause.mp3 (rešpektuje stlmenie)
+  function applause(){
+    if(muted) return;
+    const a=document.getElementById('applauseAudio');
+    if(!a) return;
+    try{ a.currentTime=0; a.play().catch(()=>{}); }catch(e){}
+  }
+
+  /* ====================== STAV HRY ====================== */
+  const stage=document.getElementById('stage');
+  const lanesEl=document.getElementById('lanes');
+  const menu=document.getElementById('menu');
+  const pause=document.getElementById('pause');
+  const fx=document.getElementById('fx');
+  const scoreBadge=document.getElementById('score');
+  const starRow=document.getElementById('starRow');
+  const STARS_PER_SET=5;
+  const STAR_PATH="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z";
+  function buildStarRow(){
+    starRow.innerHTML='';
+    for(let i=0;i<STARS_PER_SET;i++){
+      starRow.insertAdjacentHTML('beforeend',
+        '<svg class="slot" viewBox="0 0 24 24"><path d="'+STAR_PATH+'"/></svg>');
+    }
+  }
+  function fillStar(index){
+    const s=starRow.children[index];
+    if(!s) return;
+    s.classList.add('on'); s.classList.remove('pop'); void s.offsetWidth; s.classList.add('pop');
+  }
+  function resetStarRow(){
+    [...starRow.children].forEach(s=>s.classList.remove('on','pop'));
+  }
+  // počet rozsvietêných hviezdičiek podľa POMERU TRAFENýCH dlaždíc k CELKOVÉMU počtu
+  // dlaždíc v pesničke. Plných 5 hviezdičiek až keď hráč stlačí 90 % všetkých dlaždíc.
+  const STAR_TH=[0.18, 0.36, 0.54, 0.72, 0.90];
+  function litFromRatio(){
+    const total=songBeats.length;
+    if(total<=0) return 0;
+    const r=score/total;
+    let n=0; for(const t of STAR_TH){ if(r>=t) n++; }
+    return n;
+  }
+  function refreshStars(){
+    const n=litFromRatio();
+    for(let i=0;i<STARS_PER_SET;i++){
+      const s=starRow.children[i]; if(!s) continue;
+      if(i<n){
+        if(!s.classList.contains('on')){ s.classList.add('on'); s.classList.remove('pop'); void s.offsetWidth; s.classList.add('pop'); }
+      } else {
+        s.classList.remove('on','pop');
+      }
+    }
+  }
+  buildStarRow();
+  const homeBtn=document.getElementById('homeBtn');
+  let progDone=false;
+
+  function setProgress(pct){
+    homeBtn.style.setProperty('--p', pct);
+  }
+  function updateProgress(){
+    let p=0;
+    if(songAudio.duration && isFinite(songAudio.duration)) p=songAudio.currentTime/songAudio.duration;
+    p=Math.max(0,Math.min(1,p));
+    const pct=p*100;
+    setProgress(pct);
+    const tEl=document.getElementById('gameTime');
+    if(tEl){
+      const sec=(songAudio.currentTime||0);
+      tEl.textContent=sec.toFixed(1).replace('.',',')+' s';
+    }
+    if(pct>=100 && !progDone){
+      progDone=true;
+      const r=homeBtn.getBoundingClientRect();
+      sparkle(r.left+r.width/2, r.top+r.height/2);
+    } else if(pct<5 && progDone){
+      progDone=false;
+    }
+  }
+
+  // STOPKY V DLHEJ PAUZE: ak je medzi dvoma taktami medzera dlhšia ako 5 s,
+  // zobraz ten istý odpočet (počíta do najbližšieho taktu). Po POSLEDNOM takte
+  // sa už nezobrazí, aj keby do konca pesničky bola dlhá pauza.
+  function updateGapCountdown(ct){
+    if(countingDown){ return; } // úvodný odpočet má prednosť pred touto stopkou
+    let idx=-1;
+    for(let i=0;i<songBeats.length;i++){ if(songBeats[i].t>ct){ idx=i; break; } }
+    let show=false, remain=0;
+    if(idx>0){ // existuje predošlý aj nasledujúci takt → skutočná medzera (nie koniec)
+      const prevT=songBeats[idx-1].t, nextT=songBeats[idx].t;
+      if(nextT-prevT>GAP_THRESHOLD){ remain=nextT-ct; if(remain>0) show=true; }
+    }
+    if(show){
+      if(!gapActive){ gapActive=true; gapLastShown=-1; countdownEl.classList.remove('loading'); countdownEl.classList.add('show'); }
+      const ci=Math.ceil(remain);
+      if(ci!==gapLastShown){ gapLastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
+    } else if(gapActive){
+      gapActive=false; countdownEl.classList.remove('show');
+    }
+  }
+
+  // KONFETY NA KONCI: keď prejde posledný takt a do konca pesničky ostávajú
+  // aspoň 3 s, zobraz opakujúci sa GIF v strede až do konca.
+  function updateEndConfetti(ct){
+    if(!songBeats.length){ return; }
+    const lastT=songBeats[songBeats.length-1].t;
+    const dur=songAudio.duration;
+    const longTail=isFinite(dur) ? (dur-lastT>=END_CELEBRATE) : true;
+    const show = ct>lastT && longTail && !finished;
+    if(show && !confettiEl.classList.contains('show')) confettiEl.classList.add('show');
+  }
+  function hideConfetti(){ confettiEl.classList.remove('show'); }
+
+  let cols=3;
+  let tileStyle='keys';
+  let tiles=[], lastTime=0, running=false, raf=null;
+  let score=0;
+  let misses=0;
+  let laneEls=[];
+
+  // --- režim vlastnej pesničky ---
+  const songAudio=document.getElementById('songAudio');
+  let songMode=false, songData=null, songBeats=[];
+  let songStarted=false, songTa=0, tileSeq=0, leadIn=2, preRoll=0, finished=false;
+  let countdownRaf=null, countingDown=false, cdAborted=false;
+  let gapActive=false, gapLastShown=-1;
+  const GAP_THRESHOLD=5; // pauza medzi taktami dlhšia ako 5 s → zobraz stopky
+  const confettiEl=document.getElementById('confetti');
+  const END_CELEBRATE=3; // ak po poslednom takte ostávajú aspoň 3 s do konca → konfety
+  const COUNTDOWN_SECS=3;
+  const countdownEl=document.getElementById('countdown');
+  const countNum=document.getElementById('countNum');
+
+  function buildLanes(){
+    lanesEl.innerHTML='';
+    laneEls=[];
+    // užšia, vycentrovaná herná plocha (stĺpce bližšie k stredu)
+    const w = cols===1
+      ? Math.min(window.innerWidth*0.92, window.innerHeight*0.52)
+      : Math.min(window.innerWidth*0.94, window.innerHeight*0.92);
+    lanesEl.style.width = Math.round(w)+'px';
+    for(let i=0;i<cols;i++){
+      const l=document.createElement('div');
+      l.className='lane';
+      lanesEl.appendChild(l);
+      laneEls.push({el:l, lastSpawn:-99, lastTile:null});
+    }
+  }
+
+  function tileSize(){
+    const lw=(lanesEl.clientWidth||window.innerWidth)/cols;
+    // výška dlaždice je rovnaká pre všetky (tesné ukladanie ribbonu)
+    const block=Math.min(window.innerHeight*0.26, lw*1.25);
+    const art=Math.min(lw*0.82, block*0.92);
+    return {art, block};
+  }
+  // rýchlosť padania: jedna dlaždica prejde svoju výšku za fallSpeedTime sekúnd.
+  // Odvodzuje sa z NAJKRATŠIEHO odstupu taktov, aby sa dlaždice neprekrývali.
+  let fallSpeedTime=0.4;
+  function fallVy(){ const {block}=tileSize(); return block/fallSpeedTime; }
+
+  // Cieľová („kliknací“) lin ka: dlaždica je tu presne v čase svojho taktu.
+  // Posunutá nižšie do pohodlného dosahu palca — dlaždice tak začínajú padať
+  // skôr (väčší predstih) a dieťa na ne ťuká v dolnej polovici obrazovky.
+  function hitLineY(){
+    const top=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toolbar-h'))||60;
+    return top + (window.innerHeight - top) * 0.78;
+  }
+
+  // Dĺžka dlaždice (len pre KLÁVESY): natiahne sa nahor až po ďalšiu dlaždicu,
+  // takže väčšie medzery medzi taktami = dlhšie klávesy — ale nikdy sa neprekryjú.
+  function tileLen(seq, block, vy){
+    if(tileStyle!=='keys') return block;            // ikony nechávame v pôvodnej veľkosti
+    let dtNext = (seq+1 < songBeats.length)
+      ? (songBeats[seq+1].t - songBeats[seq].t)
+      : fallSpeedTime;                              // posledná dlaždica: štandard
+    const gap = dtNext*vy;                          // medzera po ďalšiu dlaždicu (bez prekrytia)
+    const maxLen = Math.min(window.innerHeight*0.5, block*2.6);
+    return Math.max(block, Math.min(maxLen, gap));
+  }
+
+  function spawnTile(laneIndex, atY){
+    const {art,block}=tileSize();
+    const lw=(lanesEl.clientWidth||window.innerWidth)/cols;
+    const lane=laneEls[laneIndex];
+    const t=document.createElement('div');
+    t.className='tile';
+    t.style.height=block+'px';
+    const art_=document.createElement('div');
+    art_.className='art';
+    if(tileStyle==='keys'){
+      art_.classList.add('key');
+      art_.style.width=(lw*0.92)+'px';
+      art_.style.height=block+'px';     // rovnaká plná výška — ribbon tesne na sebe
+    } else {
+      const motif=MOTIFS[(Math.random()*MOTIFS.length)|0];
+      const color=PALETTE[(Math.random()*PALETTE.length)|0];
+      art_.style.width=art+'px';
+      art_.style.height=art+'px';
+      art_.innerHTML=motif(color);
+    }
+    t.appendChild(art_);
+    const startY=(atY===undefined)? -block : atY;
+    const obj={el:t, art:art_, y:startY, lane:laneIndex, h:block, hit:false, dead:false};
+    art_.addEventListener('pointerdown',(e)=>{e.preventDefault();onHit(obj);},{passive:false});
+    lane.el.appendChild(t);
+    obj.el.style.transform='translateY('+obj.y+'px)';
+    tiles.push(obj);
+    return obj;
+  }
+
+  function onHit(obj){
+    if(obj.hit||obj.dead) return;
+    obj.hit=true; obj.dead=true;
+    obj.el.classList.add('pop');
+    triangleDing();
+    score++;
+    refreshStars();
+    // iskričky z miesta dlaždice
+    const r=obj.art.getBoundingClientRect();
+    sparkle(r.left+r.width/2, r.top+r.height/2);
+    setTimeout(()=>{ obj.el.remove(); }, 440);
+  }
+
+  function sparkle(x,y){
+    const colors=['#f3c94a','#f5a0c0','#9bc36a','#8fc4dc','#dcc8ee'];
+    const n=7;
+    for(let i=0;i<n;i++){
+      const s=document.createElement('div');
+      s.className='spark';
+      const ang=(Math.PI*2*i/n)+Math.random()*0.6;
+      const dist=50+Math.random()*60;
+      s.style.left=x+'px'; s.style.top=y+'px';
+      s.style.setProperty('--dx',(Math.cos(ang)*dist)+'px');
+      s.style.setProperty('--dy',(Math.sin(ang)*dist - 30)+'px');
+      s.style.setProperty('--rot',(Math.random()*360)+'deg');
+      const sz=12+Math.random()*14;
+      s.innerHTML=`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" fill="${colors[i%colors.length]}"/></svg>`;
+      fx.appendChild(s);
+      setTimeout(()=>s.remove(),720);
+    }
+  }
+
+  let lastLane=-1;
+  function autoLane(){
+    if(cols<=1) return 0;
+    let l=Math.floor(Math.random()*cols);
+    if(l===lastLane) l=(l+1+Math.floor(Math.random()*(cols-1)))%cols; // vždy iný než predošlý
+    lastLane=l;
+    return l;
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!lastTime) lastTime=ts;
+    let dt=(ts-lastTime)/1000;
+    lastTime=ts;
+    if(dt>0.05) dt=0.05; // ochrana pri zaseknutí
+
+    const vh=window.innerHeight;
+
+    if(songMode){
+      const blk=tileSize().block;
+      const vy=fallVy();
+      const mid=hitLineY();
+
+      // ČAS PESNIČKY (ta): pred štartom rampuje z -preRoll po 0 (predstih, kým prvá
+      // dlaždica doletí do stredu), potom = SKUTOČNÝ čas audia — žiadny drift.
+      if(!songStarted){
+        songTa += dt;
+        if(songTa>=0){
+          songTa=0;
+          try{ songAudio.currentTime=0; }catch(e){}
+          songAudio.play().catch(()=>{});
+          songStarted=true;
+        }
+      } else if(songAudio.ended){ // pesnička skončila — už nezačína znova
+        finishSong();
+        return;
+      } else {
+        songTa=songAudio.currentTime;
+      }
+      const ta=songTa;
+
+      // spawn dlaždíc zhora — každá viazaná na SVOJ skutočný čas taktu (beats[seq].t)
+      let guard=0;
+      while(tileSeq<songBeats.length && guard<80){
+        const bottomI = mid + (ta - songBeats[tileSeq].t)*vy + blk/2;
+        if(bottomI >= -blk){ const nt=spawnTile(autoLane()); nt.seq=tileSeq; tileSeq++; guard++; }
+        else break;
+      }
+
+      // pozícia + dĺžka VŠETKÝCH dlaždíc je daná časom pesničky (bez driftu, presný sync).
+      // Spodok klávesy ostáva tam, kde bol — rýchlosť sa NEMENÍ; predlžuje sa len nahor.
+      for(const o of tiles){
+        if(o.hit||o.dead) continue;
+        const len=tileLen(o.seq, blk, vy);
+        const bottom = mid + (ta - songBeats[o.seq].t)*vy + blk/2;
+        o.y = bottom - len;
+        o.h = len;
+        o.el.style.height=len+'px';
+        if(tileStyle==='keys') o.art.style.height=len+'px'; // ikony nech\u00e1vame v p\u00f4vodnej ve\u013ekosti
+        o.el.style.transform='translateY('+o.y+'px)';
+        if(o.y>vh){ o.dead=true; o.el.classList.add('miss'); misses++; refreshStars(); setTimeout(()=>o.el.remove(),500); }
+      }
+      tiles=tiles.filter(o=>document.body.contains(o.el));
+      updateProgress();
+      updateGapCountdown(ta);
+      updateEndConfetti(ta);
+    }
+
+    raf=requestAnimationFrame(loop);
+  }
+
+  /* ====================== OVLÁDANIE OBRAZOVIEK ====================== */
+  function prepareStage(){
+    score=0; misses=0; resetStarRow(); finished=false;
+    hideConfetti();
+    tiles.forEach(o=>o.el.remove()); tiles=[];
+    buildLanes();
+    menu.style.display='none';
+    pause.style.display='none';
+    stage.style.display='block';
+    running=true; lastTime=0;
+    cancelAnimationFrame(raf);
+  }
+
+  function startSong(data){
+    songMode=true; songData=data;
+    // názov skladby do horného toolbaru (veľkými písmenami)
+    { const tt=document.getElementById('toolbarTitle');
+      if(tt) tt.textContent=(data.title || 'Hudobné dlaždice').toUpperCase(); }
+    // po\u010det st\u013apcov ur\u010duje VO\u013dBA V MENU (nie beatmapa). Lane v beatmape sa
+    // pou\u017eije ak sed\u00ed; inak sa objekty striedavo rozlo\u017eia medzi st\u013apce.
+    songBeats=(data.beats||[]).slice().sort((a,b)=>a.t-b.t);
+    // rýchlosť podľa NAJKRATŠIEHO odstupu taktov — dlaždice tak nikdy nesplynú
+    // a hustejšie pesničky padajú svižnejšie. Sync je vždy presný (reálne časy taktov).
+    let minGap=Infinity;
+    for(let i=1;i<songBeats.length;i++) minGap=Math.min(minGap, songBeats[i].t-songBeats[i-1].t);
+    if(!isFinite(minGap)||minGap<=0) minGap=0.45;
+    fallSpeedTime=Math.max(0.16, Math.min(0.5, minGap));
+    lastLane=-1; tileSeq=0;
+    ensureAudio(); // triangel + presné hodiny
+    songAudio.src=data.audioUrl;
+    songAudio.loop=false; // cyklus riešime sami (kvôli predstihu)
+    try{ songAudio.pause(); songAudio.currentTime=0; }catch(e){}
+    prepareStage();
+    progDone=false; setProgress(0);
+    // predstih: kým prvá dlaždica doletí zhora do stredu (len ak prvý takt príde skôr)
+    const {block}=tileSize();
+    leadIn=(hitLineY() + block/2)/fallVy();
+    const firstT=songBeats.length?songBeats[0].t:0;
+    preRoll=Math.max(0, leadIn-firstT);
+    songTa=-preRoll; songStarted=false;
+    startCountdown();
+  }
+
+  // Hudba aj hra idú HNEĎ, ale až keď audio NAOZAJ začne hrať (nečakáme s frozen
+  // obrazovkou na buffer). Kým sa pesnička načítava, stopky ukazujú „načítavam".
+  // Audio je potom hlavné hodiny → presný sync.
+  function startCountdown(){
+    cancelAnimationFrame(raf);
+    cancelAnimationFrame(countdownRaf);
+    countingDown=false;
+    cdAborted=false;
+    // ukáž stopky hneď v „načítava sa" stave
+    countdownEl.classList.add('show','loading');
+    countNum.textContent='';
+    songStarted=true;
+
+    let begun=false;
+    const firstT=songBeats.length?songBeats[0].t:0;
+
+    function begin(){
+      if(begun||cdAborted) return; begun=true;
+      cleanup();
+      countdownEl.classList.remove('loading');
+      // rozbehni hru (audio už reálne hrá → currentTime sa hýbe)
+      running=true; lastTime=0;
+      raf=requestAnimationFrame(loop);
+      // overlay stopiek: čas do príchodu prvej dlaždice
+      countingDown=true;
+      let lastShown=-1;
+      (function step(){
+        if(!countingDown) return;
+        const remain=firstT-(songAudio.currentTime||0);
+        if(remain<=0){ countingDown=false; countdownEl.classList.remove('show'); return; }
+        const ci=Math.ceil(remain);
+        if(ci!==lastShown){ lastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
+        countdownRaf=requestAnimationFrame(step);
+      })();
+    }
+
+    function onPlaying(){ begin(); }
+    function onTime(){ if((songAudio.currentTime||0)>0) begin(); }
+    function cleanup(){
+      songAudio.removeEventListener('playing',onPlaying);
+      songAudio.removeEventListener('timeupdate',onTime);
+    }
+    songAudio.addEventListener('playing',onPlaying);
+    songAudio.addEventListener('timeupdate',onTime);
+
+    // spusti prehrávanie od začiatku
+    try{ songAudio.currentTime=0; }catch(e){}
+    try{ songAudio.load(); }catch(e){}
+    songAudio.play().catch(()=>{});
+    // ak je už pripravené a beží, rozbehni okamžite
+    if(songAudio.readyState>=3 && !songAudio.paused && songAudio.currentTime>0) begin();
+  }
+
+  function setSongStatus(msg){ document.getElementById('songStatus').innerHTML=msg; }
+
+  // automatické načítanie všetkých .json beatmáp z GitHub adresára do roletky (select)
+  const SONGS_REPO='https://api.github.com/repos/PcProfisro/moje-pesnicky/contents';
+  const songSelect=document.getElementById('songSelect');
+  const songCache={}; // url -> data
+  const bust=u=>u+(u.includes('?')?'&':'?')+'_cb='+Date.now(); // proti CDN cache
+  async function fetchSongList(){
+    songSelect.innerHTML='<option value="">Načítavam…</option>';
+    setSongStatus('');
+    try{
+      const res=await fetch(bust(SONGS_REPO),{cache:'no-store'});
+      if(!res.ok) throw 0;
+      const items=await res.json();
+      const jsons=Array.isArray(items)? items.filter(it=>it.type==='file' && /\.json$/i.test(it.name)) : [];
+      if(!jsons.length){ songSelect.innerHTML='<option value="">— žiadne pesničky —</option>'; setSongStatus('Zatiaľ tu nie sú žiadne pesničky. Priprav ich v <a href="Editor.html">Editore</a>.'); return; }
+      jsons.sort((a,b)=>a.name.localeCompare(b.name,'sk'));
+      songSelect.innerHTML='';
+      for(const it of jsons){
+        const opt=document.createElement('option');
+        opt.value=it.download_url;
+        opt.textContent=it.name.replace(/\.json$/i,'');
+        songSelect.appendChild(opt);
+        // dotažné načítanie pekného názvu + predpríprava dát
+        fetch(bust(it.download_url),{cache:'no-store'}).then(r=>r.json()).then(d=>{
+          if(d && d.audioUrl && Array.isArray(d.beats)){ songCache[it.download_url]=d; if(d.title) opt.textContent=d.title; }
+        }).catch(()=>{});
+      }
+    }catch(e){
+      songSelect.innerHTML='<option value="">— chyba —</option>';
+      setSongStatus('Nepodarilo sa načítať zoznam z GitHubu — skús <strong>↻</strong>.');
+    }
+  }
+
+  // Odomkne <audio> v rámci ťuknutia (gesto používateľa). Bez tohto by neskoršie
+  // play() po asynchrónnom načítaní beatmapy zablokovala autoplay politika (mobil).
+  const SILENT_WAV='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  let audioPrimed=false;
+  function primeAudio(){
+    if(audioPrimed) return;
+    audioPrimed=true;
+    try{ if(actx && actx.state==='suspended') actx.resume(); }catch(e){}
+    // odomkni aj potleskový <audio> v rámci toho istého gesta (inak ho autoplay
+    // politika na konci pesničky zablokuje a potlesk nezaznie)
+    try{
+      const ap=document.getElementById('applauseAudio');
+      if(ap){
+        ap.muted=true;
+        const pp=ap.play();
+        if(pp && pp.then) pp.then(()=>{ try{ ap.pause(); ap.currentTime=0; ap.muted=muted; }catch(e){} }).catch(()=>{ try{ ap.muted=muted; }catch(e){} });
+      }
+    }catch(e){}
+    try{
+      songAudio.src=SILENT_WAV;
+      const p=songAudio.play();
+      if(p && p.then) p.then(()=>{
+        // pauzni len ak je ešte načítaný ticho-klip (nie už reálna pesnička)
+        if(songAudio.src===SILENT_WAV){ try{ songAudio.pause(); }catch(e){} }
+      }).catch(()=>{ audioPrimed=false; });
+    }catch(e){ audioPrimed=false; }
+  }
+
+  async function startSelected(){
+    const url=songSelect.value;
+    if(!url){ setSongStatus('Najprv vyber pesničku.'); return; }
+    primeAudio(); // ODOMKNUTIE zvuku v geste ťuknutia (pred async načítaním)
+    if(songCache[url]){ setSongStatus(''); startSong(songCache[url]); return; }
+    playFromUrl(url);
+  }
+
+  async function playFromUrl(url){
+    setSongStatus('Načítavam pesničku…');
+    try{
+      const res=await fetch(bust(url),{cache:'no-store'});
+      if(!res.ok) throw 0;
+      const data=await res.json();
+      if(!data.audioUrl || !Array.isArray(data.beats) || !data.beats.length) throw 0;
+      songCache[url]=data;
+      setSongStatus('');
+      startSong(data);
+    }catch(e){
+      setSongStatus('Pesničku sa nepodarilo načítať.');
+    }
+  }
+
+  function pauseGame(){
+    if(finished) return;
+    running=false; cancelAnimationFrame(raf);
+    cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading'); hideConfetti();
+    songAudio.pause();
+    document.getElementById('pauseTitle').style.display='';
+    document.getElementById('pauseScore').style.display='';
+    document.getElementById('pauseTitle').innerHTML='<span class="b">Pauza</span>';
+    document.getElementById('resumeBtn').innerHTML='<span class="pico">▶</span>Pokračovať';
+    renderPauseStars();
+    pause.style.display='flex';
+  }
+  function finishSong(){
+    if(finished) return;
+    finished=true;
+    running=false; cancelAnimationFrame(raf);
+    cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading');
+    try{ songAudio.pause(); }catch(e){}
+    tiles.forEach(o=>o.el.remove()); tiles=[];
+    // potlesk zaznie HNEĎ na konci; konfety bežia ďalej; popup až keď potlesk doznie
+    confettiEl.classList.add('show');
+
+    function showEndPopup(){
+      hideConfetti();
+      document.getElementById('pauseTitle').style.display='none';
+      document.getElementById('pauseScore').style.display='none';
+      document.getElementById('resumeBtn').innerHTML='<span class="pico">↻</span>Hrať znova';
+      renderPauseStars();
+      pause.style.display='flex';
+    }
+
+    const ap=document.getElementById('applauseAudio');
+    if(!muted && ap){
+      try{ ap.currentTime=0; ap.play().catch(()=>{}); }catch(e){}
+      let shown=false;
+      const reveal=()=>{ if(shown||!finished)return; shown=true; ap.removeEventListener('ended',reveal); showEndPopup(); };
+      ap.addEventListener('ended',reveal);
+      const dur=(isFinite(ap.duration)&&ap.duration>0)?ap.duration:3;
+      setTimeout(reveal,(dur+0.25)*1000); // poistka, keby 'ended' nezaznelo
+    } else {
+      showEndPopup();
+    }
+  }
+  function renderPauseStars(){
+    const box=document.getElementById('pauseStars');
+    const n=litFromRatio();
+    const attempts=score+misses;
+    let html='';
+    for(let i=0;i<STARS_PER_SET;i++){
+      const on=i<n;
+      html+='<svg viewBox="0 0 24 24"><path d="'+STAR_PATH+'" fill="'+(on?'#ffae0d':'#e3ecf0')+'" stroke="'+(on?'#d99500':'#cdd9df')+'" stroke-width="1" stroke-linejoin="round"/></svg>';
+    }
+    box.innerHTML=html;
+    const msg=document.getElementById('pauseScore');
+    if(attempts<=0) msg.textContent='Ťukaj na dlaždice! 🌟';
+    else if(n>=5) msg.textContent='Paňáda! 🌈';
+    else if(n>=3) msg.textContent='Skvele ti to ide!';
+    else msg.textContent='Len tak ďalej!';
+  }
+  function resumeGame(){
+    pause.style.display='none';
+    if(actx&&actx.state==='suspended') actx.resume();
+    running=true; lastTime=0;
+    songAudio.play().catch(()=>{}); // ta=audio.currentTime -> sync sa obnoví sám
+    raf=requestAnimationFrame(loop);
+    // ak prvá dlaždica ešte neprišla, znova ukáž stopky
+    const firstT=songBeats.length?songBeats[0].t:0;
+    if((songAudio.currentTime||0)<firstT && !countingDown){
+      countingDown=true; countdownEl.classList.add('show');
+      let lastShown=-1;
+      (function step(){
+        if(!countingDown) return;
+        const remain=firstT-(songAudio.currentTime||0);
+        if(remain<=0){ countingDown=false; countdownEl.classList.remove('show'); return; }
+        const ci=Math.ceil(remain);
+        if(ci!==lastShown){ lastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
+        countdownRaf=requestAnimationFrame(step);
+      })();
+    }
+  }
+  function goMenu(){
+    running=false; cancelAnimationFrame(raf);
+    cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading'); hideConfetti();
+    songAudio.pause();
+    songMode=false; finished=false;
+    { const tt=document.getElementById('toolbarTitle'); if(tt) tt.textContent='PESNIČKY PRE DETI'; }
+    tiles.forEach(o=>o.el.remove()); tiles=[];
+    pause.style.display='none';
+    stage.style.display='none';
+    menu.style.display='flex';
+  }
+
+  /* ====================== VÝBERY V MENU ====================== */
+  function wireChoices(containerId,attr,cb){
+    const c=document.getElementById(containerId);
+    c.addEventListener('click',e=>{
+      const b=e.target.closest('.choice'); if(!b) return;
+      [...c.querySelectorAll('.choice')].forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      cb(b.getAttribute(attr));
+    });
+  }
+  cols=3; // pevne 3 stĺpce
+
+  document.getElementById('homeBtn').addEventListener('click',pauseGame);
+  document.getElementById('resumeBtn').addEventListener('click',()=>{
+    if(finished){ finished=false; if(songData) startSong(songData); }
+    else resumeGame();
+  });
+  document.getElementById('toMenuBtn').addEventListener('click',goMenu);
+
+  /* ====================== eduAlf TOOLBAR ====================== */
+  const SND_ON='<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h4l7-5v18l-7-5H6z"></path><path d="M22 11a6 6 0 010 10"></path><path d="M25 7a11 11 0 010 18"></path></svg>';
+  const SND_OFF='<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h4l7-5v18l-7-5H6z"></path><path d="M22 12l8 8M30 12l-8 8"></path></svg>';
+  const soundBtn=document.getElementById('soundBtn');
+  function renderSound(){ soundBtn.innerHTML=muted?SND_OFF:SND_ON; soundBtn.setAttribute('aria-label',muted?'Zapnúť zvuk':'Vypnúť zvuk'); }
+  renderSound();
+  soundBtn.addEventListener('click',()=>{
+    muted=!muted;
+    songAudio.muted=muted;
+    const ap=document.getElementById('applauseAudio');
+    if(ap){ ap.muted=muted; if(muted){ try{ ap.pause(); }catch(e){} } }
+    if(actx&&actx.state==='suspended') actx.resume();
+    renderSound();
+  });
+
+  const fsBtn=document.getElementById('fsBtn');
+  fsBtn.addEventListener('click',()=>{
+    if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen||function(){}).call(document.documentElement); }
+    else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
+  });
+
+  document.getElementById('closeBtn').addEventListener('click',()=>{
+    if(menu.style.display!=='none' && stage.style.display==='none'){
+      // už sme v menu — skús zavrieť / vrátiť späť do eduAlf launcheru
+      if(history.length>1) history.back();
+    } else {
+      goMenu();
+    }
+  });
+
+  // presná výška toolbaru → herná lišta sadá teśne podňho
+  function syncToolbarH(){
+    const tb=document.querySelector('.eda-toolbar');
+    if(tb) document.documentElement.style.setProperty('--toolbar-h', tb.offsetHeight+'px');
+  }
+  syncToolbarH();
+  window.addEventListener('resize',syncToolbarH);
+
+  // výber pesničky + ŠTART
+  document.getElementById('refreshSongs').addEventListener('click',fetchSongList);
+  document.getElementById('startBtn').addEventListener('click',startSelected);
+  songAudio.addEventListener('error',()=>{ if(songMode&&songAudio.src) setSongStatus('Pesničku (MP3) sa nepodarilo prehrať — skontroluj odkaz v beatmape.'); });
+  (function(){
+    const q=new URLSearchParams(location.search).get('song');
+    if(q){ playFromUrl(q); } else { fetchSongList(); }
+  })();
+
+  // pri zmene veľkosti okna prestav stĺpce (zachová beh)
+  let rsz;
+  window.addEventListener('resize',()=>{
+    clearTimeout(rsz);
+    rsz=setTimeout(()=>{ if(running){ /* dlaždice nechá dopadnúť, nové budú mať novú veľkosť */ } },200);
+  });
+
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden && running) pauseGame();
+  });
+})();
+</script>
+</body>
+</html>
