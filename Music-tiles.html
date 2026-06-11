@@ -504,17 +504,16 @@
   function setProgress(pct){
     homeBtn.style.setProperty('--p', pct);
   }
+  let progLast=0;
   function updateProgress(){
+    const now=performance.now();
+    if(now-progLast<200) return; // stačí ~5× za sekundu, nie každý frame
+    progLast=now;
     let p=0;
     if(songAudio.duration && isFinite(songAudio.duration)) p=songAudio.currentTime/songAudio.duration;
     p=Math.max(0,Math.min(1,p));
     const pct=p*100;
     setProgress(pct);
-    const tEl=document.getElementById('gameTime');
-    if(tEl){
-      const sec=(songAudio.currentTime||0);
-      tEl.textContent=sec.toFixed(1).replace('.',',')+' s';
-    }
     if(pct>=100 && !progDone){
       progDone=true;
       const r=homeBtn.getBoundingClientRect();
@@ -591,6 +590,7 @@
       lanesEl.appendChild(l);
       laneEls.push({el:l, lastSpawn:-99, lastTile:null});
     }
+    _geom=null; // šírka stĺpcov sa zmenila → prepočítaj cachovanú geometriu
   }
 
   function tileSize(){
@@ -612,6 +612,18 @@
     const top=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toolbar-h'))||60;
     return top + (window.innerHeight - top) * 0.78;
   }
+
+  // cachovaná geometria — prepočíta sa len pri zmene veľkosti okna,
+  // nie každý frame (getComputedStyle + merania každý frame sekajú slabšie GPU)
+  let _geom=null;
+  function geom(){
+    if(!_geom){
+      const ts=tileSize();
+      _geom={block:ts.block, art:ts.art, vy:fallVy(), mid:hitLineY(), vh:window.innerHeight};
+    }
+    return _geom;
+  }
+  window.addEventListener('resize',()=>{ _geom=null; });
 
   // Dĺžka dlaždice (len pre KLÁVESY): natiahne sa nahor až po ďalšiu dlaždicu,
   // takže väčšie medzery medzi taktami = dlhšie klávesy — ale nikdy sa neprekryjú.
@@ -650,7 +662,7 @@
     const obj={el:t, art:art_, y:startY, lane:laneIndex, h:block, hit:false, dead:false};
     art_.addEventListener('pointerdown',(e)=>{e.preventDefault();onHit(obj);},{passive:false});
     lane.el.appendChild(t);
-    obj.el.style.transform='translateY('+obj.y+'px)';
+    obj.el.style.transform='translate3d(0,'+obj.y+'px,0)';
     tiles.push(obj);
     return obj;
   }
@@ -703,12 +715,9 @@
     lastTime=ts;
     if(dt>0.05) dt=0.05; // ochrana pri zaseknutí
 
-    const vh=window.innerHeight;
-
     if(songMode){
-      const blk=tileSize().block;
-      const vy=fallVy();
-      const mid=hitLineY();
+      const g=geom();
+      const blk=g.block, vy=g.vy, mid=g.mid, vh=g.vh;
 
       // ČAS PESNIČKY (ta): pred štartom rampuje z -preRoll po 0 (predstih, kým prvá
       // dlaždica doletí do stredu), potom = SKUTOČNÝ čas audia — žiadny drift.
@@ -743,13 +752,15 @@
         const len=tileLen(o.seq, blk, vy);
         const bottom = mid + (ta - songBeats[o.seq].t)*vy + blk/2;
         o.y = bottom - len;
-        o.h = len;
-        o.el.style.height=len+'px';
-        if(tileStyle==='keys') o.art.style.height=len+'px'; // ikony nech\u00e1vame v p\u00f4vodnej ve\u013ekosti
-        o.el.style.transform='translateY('+o.y+'px)';
+        if(len!==o.h){ // výška je konštantná — zapisuj len pri zmene (inak layout každý frame)
+          o.h = len;
+          o.el.style.height=len+'px';
+          if(tileStyle==='keys') o.art.style.height=len+'px';
+        }
+        o.el.style.transform='translate3d(0,'+o.y+'px,0)';
         if(o.y>vh){ o.dead=true; o.el.classList.add('miss'); misses++; refreshStars(); setTimeout(()=>o.el.remove(),500); }
       }
-      tiles=tiles.filter(o=>document.body.contains(o.el));
+      tiles=tiles.filter(o=>o.el.isConnected);
       updateProgress();
       updateGapCountdown(ta);
       updateEndConfetti(ta);
