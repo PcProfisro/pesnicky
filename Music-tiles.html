@@ -23,7 +23,9 @@
     --shadow: var(--shadow-lg);
     --toolbar-h: 60px;
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+    -webkit-touch-callout:none;}
   html,body{height:100%;margin:0;}
   body{
     font-family:var(--font-family-sans);
@@ -61,10 +63,85 @@
   .art.key{border-radius:14px;background:linear-gradient(180deg,#3b3b46 0%,#23232c 60%,#191920 100%);
     box-shadow:inset 0 2px 3px rgba(255,255,255,.14), inset 0 -3px 6px rgba(0,0,0,.4), 0 9px 16px rgba(60,50,40,.28);}
   .tile.pop .art.key{background:linear-gradient(180deg,#d8efb4,#a8cf72);box-shadow:0 0 0 4px rgba(168,207,114,.4);}
-  .tile.pop .art{animation:pop .42s cubic-bezier(.2,1.4,.5,1) forwards;}
+  .tile.pop .art{animation:pop .22s cubic-bezier(.2,1.4,.5,1) forwards;}
   .tile.miss .art{animation:fade .5s ease forwards;}
   @keyframes pop{0%{transform:scale(1);}35%{transform:scale(1.22);}100%{transform:scale(.5);opacity:0;}}
   @keyframes fade{to{transform:scale(.82) translateY(18px);opacity:0;}}
+
+  /* ---------- dlhé (držané) noty ---------- */
+  /* odlišný vzhľad: farebný pás namiesto čiernej klávesy, s „hlavou" na ťuknutie */
+  .art.key.long{
+    border-radius:18px;overflow:hidden;
+    background:linear-gradient(180deg,#7fc0ec 0%,#54a3da 55%,#3f8cc4 100%);
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.4), inset 0 -3px 8px rgba(20,70,110,.35), 0 9px 16px rgba(50,90,130,.3);
+  }
+  .art.key.long > *{pointer-events:none;}
+  .art.key.long .hold-track{
+    position:absolute;left:50%;top:14px;bottom:14px;width:8px;transform:translateX(-50%);
+    border-radius:8px;opacity:.6;
+    background:repeating-linear-gradient(180deg,rgba(255,255,255,.75) 0 9px,transparent 9px 20px);
+  }
+  /* farebné zvýraznenie postupu držania – rastie zdola nahor */
+  .art.key.long .hold-fill{
+    position:absolute;left:0;right:0;bottom:0;height:0;
+    background:linear-gradient(180deg,#d4f0ad 0%,#a8cf72 70%,#8ec65a 100%);
+    box-shadow:inset 0 0 22px rgba(142,208,90,.6);
+  }
+  .art.key.long .hold-head{
+    position:absolute;left:50%;bottom:9px;transform:translateX(-50%);
+    width:46%;max-width:62px;aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#ffffff,#e4f4ff 55%,#bce3ff);
+    box-shadow:0 3px 8px rgba(20,70,110,.35), 0 0 0 4px rgba(255,255,255,.35);
+    display:flex;align-items:center;justify-content:center;
+    animation:headpulse 1.05s ease-in-out infinite;
+  }
+  .art.key.long .hold-head::after{content:"";width:38%;height:38%;border-radius:50%;background:#3f8cc4;}
+  @keyframes headpulse{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.16);}}
+  /* aktívne držanie – výrazný zelený obrys + žiara */
+  .tile.holding .art.key.long{
+    box-shadow:0 0 0 5px rgba(142,208,90,.6), inset 0 2px 3px rgba(255,255,255,.4), 0 12px 24px rgba(110,170,80,.45);
+  }
+  .tile.holding .art.key.long .hold-head{display:none;}
+  .tile.holding .art.key.long .hold-track{opacity:.22;}
+  .tile.waitpulse .art{animation:waitpulse .7s ease-in-out infinite;}
+  @keyframes waitpulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.24);}}
+  .tile.pop .art.key.long{background:linear-gradient(180deg,#d8efb4,#a8cf72);}
+
+  /* ---------- mód PIANO (padajúce noty + klávesnica dole) ---------- */
+  #pianoStage{position:absolute;inset:0;display:none;z-index:2;}
+  #pnFall{position:absolute;top:var(--toolbar-h);left:0;right:0;bottom:var(--kb-h,180px);overflow:hidden;}
+  #pnKeys{position:absolute;left:0;right:0;bottom:0;height:var(--kb-h,180px);
+    display:flex;background:#1c1a18;box-shadow:0 -4px 14px rgba(60,45,30,.25);}
+  .pnKey{flex:1;height:100%;cursor:pointer;position:relative;border-radius:0 0 12px 12px;
+    box-shadow:inset 0 -10px 16px rgba(0,0,0,.2),inset 0 3px 4px rgba(255,255,255,.45),inset 1px 0 0 rgba(0,0,0,.25),inset -1px 0 0 rgba(0,0,0,.25);
+    transition:transform .05s ease, filter .05s ease;}
+  .pnKey.down{transform:translateY(6px);filter:brightness(1.16) saturate(1.1);}
+  .pnKey.await{animation:pnAwait .7s ease-in-out infinite;}
+  @keyframes pnAwait{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3) saturate(1.15);}}
+  /* DRŽANÁ klávesa: výrazný pulzujúci biely prstenec = „drž ďalej!" */
+  .pnKey.holding{z-index:3;animation:pnHold .5s ease-in-out infinite;}
+  @keyframes pnHold{
+    0%,100%{filter:brightness(1.14) saturate(1.12);
+      box-shadow:inset 0 -10px 16px rgba(0,0,0,.2),inset 0 3px 4px rgba(255,255,255,.5),0 0 0 3px rgba(255,255,255,.6),0 0 20px rgba(255,255,255,.55);}
+    50%{filter:brightness(1.5) saturate(1.3);
+      box-shadow:inset 0 -10px 16px rgba(0,0,0,.2),inset 0 3px 4px rgba(255,255,255,.65),0 0 0 7px rgba(255,255,255,.9),0 0 34px rgba(255,255,255,.85);}
+  }
+
+  .pnNote{position:absolute;left:0;top:0;will-change:transform;pointer-events:none;
+    display:flex;align-items:stretch;justify-content:center;}
+  .pnNote .ball .noteSvg,.pnNote .bar .noteSvg{position:relative;z-index:2;display:block;}
+  .pnNote.ready .ball,.pnNote.ready .bar{animation:pnReady .62s ease-in-out infinite;}
+  .pnNote .ball{margin:auto;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.95);font-size:24px;
+    box-shadow:inset 0 4px 7px rgba(255,255,255,.55),inset 0 -5px 9px rgba(0,0,0,.18),0 7px 13px rgba(80,60,40,.28);}
+  .pnNote .bar{position:relative;height:100%;border-radius:16px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 3px 5px rgba(255,255,255,.45),inset 0 -6px 12px rgba(0,0,0,.18),0 8px 15px rgba(80,60,40,.26);}
+  .pnNote .bar .fill{position:absolute;left:0;right:0;bottom:0;height:0;
+    background:linear-gradient(180deg,#d4f0ad 0%,#a8cf72 70%,#8ec65a 100%);box-shadow:inset 0 0 22px rgba(142,208,90,.6);}
+  .pnNote.holding .bar{box-shadow:0 0 0 4px rgba(142,208,90,.6),inset 0 3px 5px rgba(255,255,255,.45),0 10px 20px rgba(110,170,80,.4);}
+  @keyframes pnReady{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+  .pnNote.pop{animation:pop .42s cubic-bezier(.2,1.4,.5,1) forwards;}
 
   /* ---------- eduAlf horný toolbar (app chrome) ---------- */
   .eda-toolbar{
@@ -101,6 +178,12 @@
   .topbar{position:absolute;top:calc(var(--toolbar-h) + 10px);left:0;right:0;z-index:5;display:flex;
     justify-content:space-between;align-items:flex-start;padding:14px 20px;pointer-events:none;}
   .topbar button{pointer-events:auto;}
+  .speedlive{pointer-events:auto;display:none;gap:5px;align-items:center;
+    background:rgba(255,255,255,.86);border-radius:16px;padding:5px;box-shadow:0 5px 14px rgba(120,90,60,.2);}
+  .speedlive button{width:42px;height:42px;border-radius:12px;border:none;background:transparent;
+    font-family:inherit;font-weight:700;font-size:19px;color:#a99c8f;cursor:pointer;transition:transform .06s;}
+  .speedlive button:active{transform:scale(.92);}
+  .speedlive button.sel{background:#9bc36a;color:#fff;box-shadow:0 3px 0 #7aab48;}
 
   .score{
     display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -207,6 +290,12 @@
   .choice.sel{border-color:var(--primaryColor);background:var(--tonedPaperColor);}
   .choice .glyph{font-size:34px;line-height:1;}
   .choice svg{width:46px;height:46px;}
+  .speedchoices{gap:12px;}
+  .speedchoices .choice{min-width:92px;min-height:auto;padding:12px 12px;gap:4px;font-size:clamp(14px,2.4vw,17px);}
+  .speedchoices .choice .glyph{font-size:30px;}
+  /* Typ hry (PIANO/DLAŽDICE/HLAS): väčšie ikony pri rovnakej veľkosti boxu */
+  #gameChoices .choice svg{width:62px;height:62px;}
+  #gameChoices .choice .glyph{font-size:46px;}
 
   .play{
     display:flex;align-items:center;justify-content:center;gap:.35em;
@@ -273,6 +362,14 @@
     100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--rot));opacity:0;}
   }
 
+  /* legenda v menu: krátka (ťuknutie) vs. dlhá (podržanie) nota */
+  .howto{display:flex;gap:20px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+  .howto-item{display:flex;align-items:center;gap:10px;font-size:clamp(14px,2.4vw,17px);font-weight:700;color:var(--descriptionColor);}
+  .howto .hk{flex:none;width:26px;height:34px;border-radius:8px;}
+  .howto .hk.short{background:linear-gradient(180deg,#3b3b46,#191920);box-shadow:inset 0 1px 2px rgba(255,255,255,.14);}
+  .howto .hk.long{height:50px;position:relative;background:linear-gradient(180deg,#7fc0ec,#3f8cc4);}
+  .howto .hk.long::after{content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.4);}
+
   @media (max-width:520px){
     .card{border-radius:32px;}
     .choices{gap:10px;}
@@ -309,8 +406,15 @@
 <!-- HERNÁ PLOCHA -->
 <div id="stage">
   <div id="lanes"></div>
+  <div id="pianoStage">
+    <div id="pnFall"></div>
+    <div id="pnKeys"></div>
+  </div>
   <div class="topbar">
     <button class="iconbtn" id="homeBtn" aria-label="Domov / pauza"><span class="ico">⏸</span></button>
+    <div class="speedlive" id="speedLive">
+      <button data-spd="1">1</button><button data-spd="2">2</button><button data-spd="3">3</button>
+    </div>
     <div class="score" id="score" aria-label="Nazbierané hviezdičky">
       <div class="starrow" id="starRow"></div>
     </div>
@@ -338,6 +442,15 @@
         <button class="refreshbtn" id="refreshSongs" title="Obnoviť zoznam">↻</button>
       </div>
       <p class="hint" id="songStatus"></p>
+    </div>
+
+    <div class="group speedgroup" id="gameGroup" style="display:none;">
+      <h3>Typ hry</h3>
+      <div class="choices speedchoices" id="gameChoices">
+        <button class="choice" data-game="piano" aria-label="Piano"><span class="glyph"><svg viewBox="0 0 36 30" width="34" height="30" aria-hidden="true"><ellipse cx="14.6" cy="9.4" rx="3.4" ry="2.5" fill="#085475" transform="rotate(-18 14.6 9.4)"></ellipse><rect x="17.2" y="0.8" width="2.4" height="9" rx="1.2" fill="#085475"></rect><rect x="2.5" y="15" width="4.2" height="12" rx="1.5" fill="#e63329"></rect><rect x="7.2" y="15" width="4.2" height="12" rx="1.5" fill="#ef8a23"></rect><rect x="11.9" y="15" width="4.2" height="12" rx="1.5" fill="#f4d711"></rect><rect x="16.6" y="15" width="4.2" height="12" rx="1.5" fill="#1c9b3e"></rect><rect x="21.3" y="15" width="4.2" height="12" rx="1.5" fill="#6ec7e8"></rect><rect x="26" y="15" width="4.2" height="12" rx="1.5" fill="#2273c9"></rect><rect x="30.7" y="15" width="4.2" height="12" rx="1.5" fill="#7a3a9e"></rect></svg></span></button>
+        <button class="choice sel" data-game="tiles" aria-label="Dlaždice"><span class="glyph"><svg viewBox="0 0 36 30" width="34" height="30" aria-hidden="true"><rect x="3" y="1" width="9" height="13" rx="3" fill="#8fc4dc"></rect><rect x="13.5" y="8.5" width="9" height="13" rx="3" fill="#9bc36a"></rect><rect x="24" y="16" width="9" height="13" rx="3" fill="#e79ab2"></rect></svg></span></button>
+        <button class="choice" data-game="spev" id="spevChoice" style="display:none;" aria-label="Spev"><span class="glyph">🎤</span></button>
+      </div>
     </div>
 
     <button class="play" id="startBtn"><span class="pico">▶</span>ŠTART</button>
@@ -423,6 +536,31 @@
     if(actx) return;
     actx=new (window.AudioContext||window.webkitAudioContext)();
   }
+
+  /* ---- iOS "unmute": tichý slučkový <audio> drží audio session v režime
+     PLAYBACK, aby Web Audio (tóny) bolo počuť aj pri fyzickom prepínači stíšenia.
+     Bez toho iOS Web Audio stíši, ale MP3 (media element) hrá ďalej. ---- */
+  function makeSilentWavURI(sec){
+    const sr=8000, n=Math.floor(sr*sec), buf=new ArrayBuffer(44+n), dv=new DataView(buf);
+    let p=0; const ws=s=>{ for(let i=0;i<s.length;i++) dv.setUint8(p++,s.charCodeAt(i)); };
+    ws('RIFF'); dv.setUint32(p,36+n,true);p+=4; ws('WAVE'); ws('fmt ');
+    dv.setUint32(p,16,true);p+=4; dv.setUint16(p,1,true);p+=2; dv.setUint16(p,1,true);p+=2;
+    dv.setUint32(p,sr,true);p+=4; dv.setUint32(p,sr,true);p+=4; dv.setUint16(p,1,true);p+=2; dv.setUint16(p,8,true);p+=2;
+    ws('data'); dv.setUint32(p,n,true);p+=4;
+    for(let i=0;i<n;i++) dv.setUint8(p++,128); // 8-bit ticho = 128
+    const u8=new Uint8Array(buf); let bin=''; for(let i=0;i<u8.length;i++) bin+=String.fromCharCode(u8[i]);
+    return 'data:audio/wav;base64,'+btoa(bin);
+  }
+  let keepAlive=null;
+  function ensureKeepAlive(){
+    if(keepAlive) return keepAlive;
+    keepAlive=new Audio(makeSilentWavURI(0.7));
+    keepAlive.loop=true; keepAlive.preload='auto'; keepAlive.volume=1; keepAlive.muted=false;
+    keepAlive.setAttribute('playsinline',''); keepAlive.setAttribute('webkit-playsinline','');
+    return keepAlive;
+  }
+  function keepAliveOn(){ try{ ensureKeepAlive(); keepAlive.currentTime=0; const p=keepAlive.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+  function keepAliveOff(){ try{ if(keepAlive) keepAlive.pause(); }catch(e){} }
 
   // TRIANGEL "cinknutie" — krátky kovový zvuk pri trafení
   function triangleDing(){
@@ -510,7 +648,8 @@
     if(now-progLast<200) return; // stačí ~5× za sekundu, nie každý frame
     progLast=now;
     let p=0;
-    if(songAudio.duration && isFinite(songAudio.duration)) p=songAudio.currentTime/songAudio.duration;
+    const _d=clkDur();
+    if(_d && isFinite(_d)) p=clkTime()/_d;
     p=Math.max(0,Math.min(1,p));
     const pct=p*100;
     setProgress(pct);
@@ -527,6 +666,7 @@
   // zobraz ten istý odpočet (počíta do najbližšieho taktu). Po POSLEDNOM takte
   // sa už nezobrazí, aj keby do konca pesničky bola dlhá pauza.
   function updateGapCountdown(ct){
+    if(waiting){ if(gapActive){ gapActive=false; countdownEl.classList.remove('show'); } return; }
     if(countingDown){ return; } // úvodný odpočet má prednosť pred touto stopkou
     let idx=-1;
     for(let i=0;i<songBeats.length;i++){ if(songBeats[i].t>ct){ idx=i; break; } }
@@ -549,7 +689,7 @@
   function updateEndConfetti(ct){
     if(!songBeats.length){ return; }
     const lastT=songBeats[songBeats.length-1].t;
-    const dur=songAudio.duration;
+    const dur=clkDur();
     const longTail=isFinite(dur) ? (dur-lastT>=END_CELEBRATE) : true;
     const show = ct>lastT && longTail && !finished;
     if(show && !confettiEl.classList.contains('show')) confettiEl.classList.add('show');
@@ -566,6 +706,7 @@
   // --- režim vlastnej pesničky ---
   const songAudio=document.getElementById('songAudio');
   let songMode=false, songData=null, songBeats=[];
+  let waiting=false; // DLAŽDICE-NOTY: hra zastavená a čaká na ťuknutie
   let songStarted=false, songTa=0, tileSeq=0, leadIn=2, preRoll=0, finished=false;
   let countdownRaf=null, countingDown=false, cdAborted=false;
   let gapActive=false, gapLastShown=-1;
@@ -575,6 +716,87 @@
   const COUNTDOWN_SECS=3;
   const countdownEl=document.getElementById('countdown');
   const countNum=document.getElementById('countNum');
+
+  /* ====================== REŽIM: MP3 vs. TÓNOVÝ ZÁPIS ======================
+     Pesnička môže byť MP3 (audioUrl) — vtedy je <audio> hlavné hodiny — alebo
+     „tónový zápis" z MIDI (cez Convertor): noty s výškou (m), dĺžkou (d) a časom
+     (t). Vtedy si hru aj zvuk syntetizuje sama (jemný klavír) a hodiny bežia
+     podľa AudioContextu. Oba formáty fungujú cez rovnaké rozhranie clk*(). */
+  let mode='mp3';      // 'mp3' | 'tones'
+  let toneP=null;
+  let speedLevel=2; const SPEED_RATE={1:0.7,2:1.0,3:1.4}; let songRate=1; // rýchlosť prehrávania tónového zápisu
+  const MP3_RATE={1:0.7,2:0.85,3:1.0}; // MP3: 3 = originál, 2 a 1 pomaššie
+
+  function isTone(){ return mode==='tones'; }
+  function clkTime(){ return isTone()? (toneP?toneP.currentTime:0) : songAudio.currentTime; }
+  function clkDur(){ return isTone()? (toneP?toneP.duration:0) : songAudio.duration; }
+  function clkEnded(){ return isTone()? (toneP?toneP.ended:true) : songAudio.ended; }
+  function clkPlay(){ try{ return (isTone()? toneP.play() : songAudio.play())||Promise.resolve(); }catch(e){ return Promise.resolve(); } }
+  function clkPause(){ try{ if(isTone()){ if(toneP) toneP.pause(); } else songAudio.pause(); }catch(e){} }
+  function clkSeek(t){ try{ if(isTone()){ if(toneP) toneP.seek(t); } else songAudio.currentTime=t; }catch(e){} }
+
+  function detectTones(d){
+    if(d && d.mode==='tones') return true;
+    if(d && (!d.audioUrl || !String(d.audioUrl).trim()) && Array.isArray(d.beats) && d.beats.some(b=>b && b.m!=null)) return true;
+    return false;
+  }
+
+  // Syntetizátor tónového zápisu: naplánuje noty (jemný klavír) cez Web Audio
+  // Pri „tónovom zápise" je hra nástroj: t\u00f3n znie LEN ke\u010f die\u0165a \u0165ukne na dla\u017edicu
+  // (jej vlastn\u00e1 v\u00fd\u0161ka). \u017diadna automatick\u00e1 hudba na pozad\u00ed, \u017eiadny triangel.
+  // Tento objekt je teda hodiny (currentTime z performance.now(), be\u017e\u00ed v\u017edy)
+  // + klav\u00edr na po\u017eiadanie cez hit().
+  function buildTonePlayer(data){
+    ensureAudio();
+    let totalDur=+data.duration||0;
+    if(!totalDur){ const bs=data.beats||[]; for(const b of bs) totalDur=Math.max(totalDur,(+b.t)+(+b.d||0.4)); totalDur+=1.4; }
+    let offset=0, perfBase=0, running=false;
+    const live=new Set();
+    const master=actx.createGain(); master.gain.value=0.95; master.connect(actx.destination);
+    function cur(){ return running ? offset+(performance.now()/1000 - perfBase)*songRate : offset; }
+    function pianoVoice(m, d, v, when){
+      if(muted) return;
+      const f=440*Math.pow(2,(m-69)/12); d=Math.max(0.3,d||0.45); v=(v!=null?v:0.85);
+      const peak=0.22*v;
+      // Spoločná obálka: ostrý úder kladivka + dlhší prirodzený dozvuk akustického klavíra
+      const g=actx.createGain();
+      g.gain.setValueAtTime(0.0001,when);
+      g.gain.linearRampToValueAtTime(peak,when+0.005);           // úder kladivka (rýchly nábeh)
+      g.gain.exponentialRampToValueAtTime(peak*0.5,when+0.09);   // rýchly počiatočný pokles
+      g.gain.exponentialRampToValueAtTime(peak*0.2,when+0.45);
+      g.gain.exponentialRampToValueAtTime(0.0001,when+d+0.45);   // dlhý mäkký doznievajúci chvost
+      // Tlmič strún: tón časom tmavne
+      const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=0.4;
+      lp.frequency.setValueAtTime(Math.min(8500,f*9),when);
+      lp.frequency.exponentialRampToValueAtTime(Math.max(900,f*2.4),when+Math.min(1.3,d+0.4));
+      g.connect(lp).connect(master);
+      const stop=when+d+0.8;
+      // Additívna sada s miernou inharmonicitou (skutočné klavírne struny nie sú dokonale harmonické)
+      const B=0.0006; // koeficient inharmonicity
+      const partials=[[1,1.0],[2,0.6],[3,0.34],[4,0.2],[5,0.12],[6,0.07],[7,0.04],[8,0.025]];
+      partials.forEach(([n,am])=>{
+        const o=actx.createOscillator(); o.type='sine';
+        o.frequency.value=f*n*Math.sqrt(1+B*n*n);
+        const og=actx.createGain();
+        // vyššie harmonické doznievajú rýchlejšie → jas hneď po údere, potom mäkne
+        og.gain.setValueAtTime(am,when);
+        og.gain.exponentialRampToValueAtTime(Math.max(0.0001,am*0.05), when+Math.min(d+0.4, 0.5+(8-n)*0.14));
+        o.connect(og).connect(g);
+        o.start(when); o.stop(stop); live.add(o); o.onended=()=>live.delete(o);
+      });
+    }
+    function kill(){ const t=actx.currentTime; live.forEach(o=>{try{o.stop(t);}catch(e){}}); live.clear(); }
+    return {
+      get currentTime(){ return Math.min(cur(), totalDur); },
+      get duration(){ return totalDur; },
+      get ended(){ return cur()>=totalDur; },
+      play(){ if(running) return Promise.resolve(); if(actx.state==='suspended') actx.resume(); perfBase=performance.now()/1000; running=true; return Promise.resolve(); },
+      pause(){ if(!running) return; offset=cur(); running=false; kill(); },
+      seek(t){ offset=Math.max(0,t||0); if(running) perfBase=performance.now()/1000; },
+      hit(m,d,v){ try{ pianoVoice(m,d,v,actx.currentTime); }catch(e){} },
+      destroy(){ running=false; kill(); try{master.disconnect();}catch(e){} }
+    };
+  }
 
   function buildLanes(){
     lanesEl.innerHTML='';
@@ -604,6 +826,8 @@
   // Odvodzuje sa z NAJKRATŠIEHO odstupu taktov, aby sa dlaždice neprekrývali.
   let fallSpeedTime=0.4;
   function fallVy(){ const {block}=tileSize(); return block/fallSpeedTime; }
+  // dlaždica je „dlhá nota" (na podržanie), ak je aspoň 1,55× dlhšia než základný blok
+  const LONG_FACTOR=1.55;
 
   // Cieľová („kliknací“) lin ka: dlaždica je tu presne v čase svojho taktu.
   // Posunutá nižšie do pohodlného dosahu palca — dlaždice tak začínajú padať
@@ -637,7 +861,7 @@
     return Math.max(block, Math.min(maxLen, gap));
   }
 
-  function spawnTile(laneIndex, atY){
+  function spawnTile(laneIndex, atY, isLong){
     const {art,block}=tileSize();
     const lw=(lanesEl.clientWidth||window.innerWidth)/cols;
     const lane=laneEls[laneIndex];
@@ -650,6 +874,10 @@
       art_.classList.add('key');
       art_.style.width=(lw*0.92)+'px';
       art_.style.height=block+'px';     // rovnaká plná výška — ribbon tesne na sebe
+      if(isLong){
+        art_.classList.add('long');
+        art_.innerHTML='<div class="hold-fill"></div><div class="hold-track"></div><div class="hold-head"></div>';
+      }
     } else {
       const motif=MOTIFS[(Math.random()*MOTIFS.length)|0];
       const color=PALETTE[(Math.random()*PALETTE.length)|0];
@@ -659,8 +887,13 @@
     }
     t.appendChild(art_);
     const startY=(atY===undefined)? -block : atY;
-    const obj={el:t, art:art_, y:startY, lane:laneIndex, h:block, hit:false, dead:false};
-    art_.addEventListener('pointerdown',(e)=>{e.preventDefault();onHit(obj);},{passive:false});
+    const obj={el:t, art:art_, y:startY, lane:laneIndex, h:block, hit:false, dead:false,
+      long:!!isLong, holding:false, held:false, pointerId:null, lastProg:0, tone:null,
+      fillEl: isLong ? art_.querySelector('.hold-fill') : null};
+    art_.addEventListener('pointerdown',(e)=>{
+      e.preventDefault();
+      if(obj.long) startHold(obj,e); else onHit(obj);
+    },{passive:false});
     lane.el.appendChild(t);
     obj.el.style.transform='translate3d(0,'+obj.y+'px,0)';
     tiles.push(obj);
@@ -671,13 +904,89 @@
     if(obj.hit||obj.dead) return;
     obj.hit=true; obj.dead=true;
     obj.el.classList.add('pop');
-    triangleDing();
+    if(isTone() && toneP && obj.note && obj.note.m!=null) toneP.hit(obj.note.m, obj.note.d, obj.note.v);
+    else triangleDing();
     score++;
     refreshStars();
     // iskričky z miesta dlaždice
     const r=obj.art.getBoundingClientRect();
     sparkle(r.left+r.width/2, r.top+r.height/2);
-    setTimeout(()=>{ obj.el.remove(); }, 440);
+    setTimeout(()=>{ obj.el.remove(); }, 230);
+  }
+
+  /* ====================== DLHÉ (DRŽANÉ) NOTY ======================
+     Hráč ťukne na začiatok dlhej dlaždice a PODRŽÍ prst, kým celý pás
+     neprejde cez cáľovú čiaru. Postup držania sa zvýrazňuje farebnou výplňou.
+     Ak hráč pustí prst predčasne (a nie je takmer hotovo), nota sa nepočíta. */
+  function startHold(o, e){
+    if(o.hit||o.dead||o.holding||o.held) return;
+    o.holding=true;
+    o.pointerId=(e&&e.pointerId!=null)?e.pointerId:null;
+    o.el.classList.add('holding');
+    if(isTone() && toneP && o.note && o.note.m!=null){
+      toneP.hit(o.note.m, Math.max(0.7, o.note.d||0.7), o.note.v);   // tón dlaždice pri stlačení dlhej noty (bez triangla)
+    } else {
+      triangleDing();      // gong pri stlačení dlhej noty (MP3) — počas držania už ďalší zvuk neznie
+    }
+    try{ if(o.pointerId!=null) o.art.setPointerCapture(o.pointerId); }catch(_){}
+    const release=(ev)=>{
+      if(o.pointerId!=null && ev.pointerId!==o.pointerId) return;
+      o.art.removeEventListener('pointerup',release);
+      o.art.removeEventListener('pointercancel',release);
+      o.art.removeEventListener('lostpointercapture',release);
+      endHold(o);
+    };
+    o.art.addEventListener('pointerup',release);
+    o.art.addEventListener('pointercancel',release);
+    o.art.addEventListener('lostpointercapture',release);
+  }
+  // prst zdvihnutý: ak už takmer celý pás prešiel — uznáme, inak míň
+  function endHold(o){
+    if(o.held||o.dead) return;
+    if(o.lastProg>=0.82){ completeHold(o); return; }
+    o.holding=false; o.dead=true;
+    stopHoldTone(o);
+    o.el.classList.remove('holding');
+    o.el.classList.add('miss');
+    misses++; refreshStars();
+    setTimeout(()=>o.el.remove(),500);
+  }
+  // celý pás prešiel cez čiaru počas držania — úspech
+  function completeHold(o){
+    if(o.held||o.dead) return;
+    o.held=true; o.holding=false; o.hit=true; o.dead=true;
+    stopHoldTone(o);
+    o.el.classList.remove('holding');
+    if(o.fillEl) o.fillEl.style.height='100%';
+    o.el.classList.add('pop');
+    score++; refreshStars();      // na konci dlhej noty už gong nehrá
+    const r=o.art.getBoundingClientRect();
+    sparkle(r.left+r.width/2, r.top+r.height/2);
+    setTimeout(()=>o.el.remove(),440);
+  }
+  // jemný držaný tón počas držania (dlhý zvuk = dlhá nota)
+  function startHoldTone(o){
+    if(!actx||muted||o.tone) return;
+    try{
+      const t=actx.currentTime;
+      const osc=actx.createOscillator(), g=actx.createGain();
+      osc.type='sine'; osc.frequency.value=523.25; // C5
+      g.gain.value=0.0001; g.gain.linearRampToValueAtTime(0.11, t+0.05);
+      osc.connect(g).connect(actx.destination);
+      osc.start(t);
+      o.tone={osc, gain:g};
+    }catch(_){}
+  }
+  function stopHoldTone(o){
+    if(!o||!o.tone) return;
+    try{
+      const t=actx.currentTime;
+      o.tone.gain.gain.cancelScheduledValues(t);
+      o.tone.gain.gain.setValueAtTime(o.tone.gain.gain.value, t);
+      o.tone.gain.gain.exponentialRampToValueAtTime(0.0001, t+0.12);
+      o.tone.osc.stop(t+0.14);
+    }catch(_){}
+    o.tone=null;
   }
 
   function sparkle(x,y){
@@ -708,6 +1017,201 @@
     return l;
   }
 
+  /* ====================== MÓD PIANO ======================
+     Noty padajú zhora, každá vo svojom stĺpci nad svojou (dúhovou) klávesou.
+     Keď vedúca nota doletí ku klávesnici, VŠETKO zastane a čaká, kým dieťa
+     stlačí správnu klávesu — vtedy zaznie tón. Dlhšie noty treba podržať. */
+  const PN_WHITE=[60,62,64,65,67,69,71,72];
+  const PN_COL={60:'#e63329',62:'#ef8a23',64:'#f4d711',65:'#1c9b3e',67:'#6ec7e8',69:'#2273c9',71:'#7a3a9e',72:'#e63329'};
+  const PN_PC=['a','s','d','f','g','h','j','k'];
+  let PN=null, gameMode='tiles', gameChoice='tiles';
+  function pianoKeyIndex(m){ let x=+m; while(x<60)x+=12; while(x>72)x-=12;
+    let bi=0,bd=1e9; PN_WHITE.forEach((w,i)=>{ const dd=Math.abs(w-x); if(dd<bd){bd=dd;bi=i;} }); return bi; }
+  function pnNoteSVG(W,H){
+    // ♪: hlavička (dole) aj prápor (hore) majú stálu veľkosť ako v krátkej guľôčke, predlžuje sa len stopka
+    const col='rgba(255,255,255,.96)';
+    const f=W*0.62;                       // referenčná veľkosť ako pri krátkej note
+    const headRx=f*0.221, headRy=f*0.166; // hlavička o 15 % menšia
+    const gap=W*0.18;                     // medzera hore aj dole medzi notou a dlaždicou
+    const cx=W*0.50-f*0.10, cy=H-headRy-gap;
+    const stemW=Math.max(2,f*0.085);
+    const stemX=cx+headRx*0.85;
+    const top=gap, stemBotY=cy-headRy*0.2;
+    const flag='M'+(stemX+stemW)+' '+top+' q '+(f*0.50)+' '+(f*0.28)+' '+(f*0.095)+' '+(f*0.78)+
+               ' q '+(f*0.20)+' '+(-f*0.37)+' '+(-(f*0.095))+' '+(-(f*0.68))+' z';
+    return '<svg class="noteSvg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">'+
+      '<rect x="'+stemX+'" y="'+top+'" width="'+stemW+'" height="'+(stemBotY-top)+'" fill="'+col+'"/>'+
+      '<path d="'+flag+'" fill="'+col+'"/>'+
+      '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+headRx+'" ry="'+headRy+'" fill="'+col+'" transform="rotate(-20 '+cx+' '+cy+')"/>'+
+      '</svg>';
+  }
+
+  // Biely notový glyf vo vnútri farebného obalu (kruh = štvrťová, obdĺžnik = polovičná/celá).
+  //  • štvrťová → plná hlavička + nožička
+  //  • polovičná → prázdna hlavička + nožička (nožička siaha po vrch obalu)
+  //  • celá     → prázdna hlavička, bez nožičky
+  // Hlavička má STÁLU veľkosť (headD); dĺžka obalu H = trvanie tónu (d×vy),
+  // takže nota celá prejde za klávesnicu presne keď tón dohrá (na mobile aj desktope rovnako).
+  function pnGlyphSVG(W, H, type, headD){
+    const col='rgba(255,255,255,.96)';
+    headD = headD || W;
+    if(type==='quarter'){
+      const rx=headD*0.22, ry=headD*0.175, cx=W*0.44, cy=H*0.60;
+      const stemW=Math.max(2.5,headD*0.075), stemX=cx+rx*0.74, top=H*0.16;
+      return '<svg class="noteSvg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">'+
+        '<rect x="'+(stemX-stemW/2)+'" y="'+top+'" width="'+stemW+'" height="'+(cy-top)+'" rx="'+(stemW/2)+'" fill="'+col+'"/>'+
+        '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+col+'" transform="rotate(-18 '+cx+' '+cy+')"/>'+
+        '</svg>';
+    }
+    // polovičná/celá: prázdna hlavička pri spodku, dĺžka podľa trvania
+    const headRx=headD*0.30, headRy=headD*0.24, gap=headD*0.16, cx=W*0.42, cy=H-headRy-gap;
+    const stroke=Math.max(3,headD*0.11);
+    let svg='<svg class="noteSvg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">';
+    if(type==='half'){ // nožička od vrchu obalu po hlavičku
+      const stemW=Math.max(3,headD*0.10), stemX=cx+headRx*0.76, top=Math.min(gap, cy-headRy);
+      svg+='<rect x="'+(stemX-stemW/2)+'" y="'+top+'" width="'+stemW+'" height="'+(cy-top)+'" rx="'+(stemW/2)+'" fill="'+col+'"/>';
+    }
+    svg+='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(headRx-stroke/2)+'" ry="'+(headRy-stroke/2)+'" fill="none" stroke="'+col+'" stroke-width="'+stroke+'"/>';
+    svg+='</svg>';
+    return svg;
+  }
+
+  function buildPiano(){
+    const fall=document.getElementById('pnFall'), keysWrap=document.getElementById('pnKeys');
+    fall.innerHTML=''; keysWrap.innerHTML='';
+    const toolbarH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toolbar-h'))||60;
+    const kbH=Math.min(window.innerHeight*0.32, Math.max(150, window.innerWidth*0.13));
+    document.documentElement.style.setProperty('--kb-h', kbH+'px');
+    const H=Math.max(120, window.innerHeight-toolbarH-kbH);
+    const W=window.innerWidth, keyW=W/8;
+    const rate=SPEED_RATE[speedLevel]||1, vy=(H/2.6)*rate;
+    const ballD=Math.min(keyW*0.72,76);
+    const keyEls=[];
+    PN_WHITE.forEach((m,i)=>{
+      const k=document.createElement('div'); k.className='pnKey'; k.style.background=PN_COL[m];
+      keysWrap.appendChild(k); keyEls.push(k);
+      k.addEventListener('pointerdown',e=>{ e.preventDefault(); try{k.setPointerCapture(e.pointerId);}catch(_){ } pianoPress(i); });
+      k.addEventListener('pointerup',()=>pianoRelease(i));
+      k.addEventListener('pointercancel',()=>pianoRelease(i));
+      k.addEventListener('pointerleave',e=>{ if(e.buttons) pianoRelease(i); });
+    });
+    const beatSec=60/(Math.max(20,+(songData&&songData.bpm)||120)); // dĺžka jednej doby v sekundách
+    const notes=(songBeats||[]).map(b=>{
+      const idx=pianoKeyIndex(b.m), m=PN_WHITE[idx], col=PN_COL[m];
+      const d=Math.max(0.12,+b.d||0.4);
+      const beats=d/beatSec;
+      // typ noty podľa počtu dôb: celá ≥4, polovičná ≥2, inak štvrťová
+      const type = beats>=3.2 ? 'whole' : beats>=1.4 ? 'half' : 'quarter';
+      const long = (type!=='quarter');           // polovičnú a celú treba podržať
+      const el=document.createElement('div'); el.className='pnNote';
+      el.style.width=keyW+'px';
+      let L;
+      if(type==='quarter'){                       // štvrťová → kruh
+        L=ballD; el.style.height=L+'px';
+        el.innerHTML='<div class="ball" style="width:'+ballD+'px;height:'+ballD+'px;background:'+col+'">'+pnGlyphSVG(ballD,ballD,'quarter',ballD)+'</div>';
+      } else {                                     // polovičná/celá → obdĺžnik, DĺŽKA = trvanie tónu (d×vy)
+        L = Math.max(Math.round(ballD*1.2), Math.round(d*vy));
+        el.style.height=L+'px';
+        el.innerHTML='<div class="bar" style="width:'+ballD+'px;background:'+col+'"><div class="fill"></div>'+pnGlyphSVG(ballD,L,type,ballD)+'</div>';
+      }
+      fall.appendChild(el);
+      return {m,t:+b.t,d,v:(b.v!=null?+b.v:0.85),idx,L,long,type,el,played:false,pressed:false,holdProg:0,fillEl:long?el.querySelector('.fill'):null};
+    });
+    notes.sort((a,b)=>a.t-b.t);
+    PN={notes,keyEls,keyMidi:PN_WHITE,H,keyW,vy,baseVy:H/2.6,ballD,total:notes.length,played:0,holding:null,playhead:0};
+  }
+
+  function applyPianoSpeed(){
+    if(!PN) return; const rate=SPEED_RATE[speedLevel]||1;
+    PN.vy=PN.baseVy*rate;
+    // dlhe noty: dlzka obalu = trvanie tonu, takze pri zmene tempa ju treba prepocitat
+    PN.notes.forEach(n=>{ if(!n.el||!n.long) return;
+      n.L=Math.max(Math.round(PN.ballD*1.2), Math.round(n.d*PN.vy));
+      n.el.style.height=n.L+'px';
+      const bar=n.el.querySelector('.bar'), old=bar&&bar.querySelector('.noteSvg');
+      if(old){ const tmp=document.createElement('div'); tmp.innerHTML=pnGlyphSVG(PN.ballD,n.L,n.type,PN.ballD); old.replaceWith(tmp.firstChild); }
+    });
+  }
+
+  function pianoFrame(dt){
+    const pn=PN; if(!pn) return;
+    let active=null; for(const n of pn.notes){ if(!n.played){ active=n; break; } }
+    if(!active && !pn.holding){ finishSong(); return; }
+    const barrier=active?active.t:Infinity;
+    if(pn.holding){
+      const o=pn.holding;
+      if(o.pressed){ pn.playhead+=dt; o.holdProg+=dt; } // držím → posúva sa všetko spolu
+      if(o.fillEl) o.fillEl.style.height=(Math.min(1,o.holdProg/Math.max(0.25,o.d))*100)+'%';
+      if(o.holdProg>=o.d*0.9){ completePianoHold(o); } // 10% tolerancia: stačí podržať 90% trvania
+    } else if(pn.playhead<barrier){
+      pn.playhead=Math.min(barrier, pn.playhead+dt);
+    }
+    const ready=active && pn.playhead>=barrier-1e-4;
+    for(const n of pn.notes){
+      if(n.played||!n.el) continue;
+      let bottom=pn.H+(pn.playhead-n.t)*pn.vy;
+      n.el.style.transform='translate3d('+(n.idx*pn.keyW)+'px,'+(bottom-n.L)+'px,0)';
+      n.el.classList.toggle('ready', !!(ready && Math.abs(n.t-barrier)<1e-4 && n!==pn.holding));
+    }
+    for(let i=0;i<pn.keyEls.length;i++){
+      let aw=false;
+      if(ready){ for(const n of pn.notes){ if(!n.played && Math.abs(n.t-barrier)<1e-4 && n.idx===i && n!==pn.holding){ aw=true; break; } } }
+      pn.keyEls[i].classList.toggle('await', aw);
+    }
+    setProgress(pn.total? pn.played/pn.total*100 : 0);
+  }
+
+  function pianoPress(idx){
+    const pn=PN; if(!pn) return;
+    const kEl=pn.keyEls[idx]; if(kEl) kEl.classList.add('down');
+    if(!running || gameMode!=='piano') return;
+    if(pn.holding && pn.holding.idx===idx){ pn.holding.pressed=true; return; } // pokračuj v držaní
+    let active=null; for(const n of pn.notes){ if(!n.played){ active=n; break; } }
+    if(!active || pn.playhead<active.t-1e-4) return;            // nota ešte nedoletela
+    const cand=pn.notes.find(n=>!n.played && Math.abs(n.t-active.t)<1e-4 && n.idx===idx && n!==pn.holding);
+    if(!cand) return;                                            // zlá klávesa → nič (kĺudné)
+    if(cand.long){
+      pn.holding=cand; cand.pressed=true; cand.holdProg=0;
+      if(cand.el) cand.el.classList.add('holding');
+      if(kEl) kEl.classList.add('holding'); // svietiaci prstenec na klávese = drž ďalej!
+      if(toneP) toneP.hit(pn.keyMidi[idx], Math.max(0.7,cand.d), cand.v);
+    } else {
+      if(toneP) toneP.hit(pn.keyMidi[idx], cand.d, cand.v);
+      cand.played=true; pn.played++; score++; refreshStars();
+      popPianoNote(cand); sparkleAtKey(idx);
+    }
+  }
+  function pianoRelease(idx){
+    const pn=PN; if(!pn) return;
+    const kEl=pn.keyEls[idx]; if(kEl) kEl.classList.remove('down');
+    if(pn.holding && pn.holding.idx===idx) pn.holding.pressed=false;
+  }
+  function completePianoHold(o){
+    o.played=true; o.pressed=false; PN.holding=null;
+    // Žiadny skok: playhead pokračuje plynule ďalej, tón si v pokoji dobehne zvyšných ~10%,
+    // a medzitým sa ďalšia nota plynule blíži ku klávesnici.
+    PN.played++; score++; refreshStars();
+    popPianoNote(o); sparkleAtKey(o.idx);
+    const k=PN.keyEls[o.idx]; if(k) k.classList.remove('await','down','holding');
+  }
+  function popPianoNote(o){ if(!o.el) return; const el=o.el; o.el=null;
+    el.classList.remove('ready','holding'); el.classList.add('pop'); setTimeout(()=>{try{el.remove();}catch(e){}},440); }
+  function sparkleAtKey(idx){ try{ const r=PN.keyEls[idx].getBoundingClientRect(); sparkle(r.left+r.width/2, r.top+10); }catch(e){} }
+
+  function startPianoCountdown(){
+    cancelAnimationFrame(raf); cancelAnimationFrame(countdownRaf);
+    countingDown=false; cdAborted=false; running=false;
+    const t0=PN.notes.length?PN.notes[0].t:0;
+    PN.playhead=t0-PN.H/PN.vy; // prvá nota práve vchádza zhora
+    pianoFrame(0);             // počiatočné rozmiestnenie
+    // PIANO: žiadne úvodné stopky — noty padajú hneď, bez ohľadu na úvodnú pauzu v JSON-e
+    countdownEl.classList.remove('loading','show');
+    running=true; lastTime=0; raf=requestAnimationFrame(loop);
+  }
+  function clearPiano(){
+    if(PN){ PN.notes.forEach(n=>{ if(n.el){ try{n.el.remove();}catch(e){} } }); PN.holding=null; }
+  }
+
   function loop(ts){
     if(!running) return;
     if(!lastTime) lastTime=ts;
@@ -715,7 +1219,8 @@
     lastTime=ts;
     if(dt>0.05) dt=0.05; // ochrana pri zaseknutí
 
-    if(songMode){
+    if(songMode && gameMode==='piano'){ pianoFrame(dt); }
+    else if(songMode){
       const g=geom();
       const blk=g.block, vy=g.vy, mid=g.mid, vh=g.vh;
 
@@ -725,15 +1230,15 @@
         songTa += dt;
         if(songTa>=0){
           songTa=0;
-          try{ songAudio.currentTime=0; }catch(e){}
-          songAudio.play().catch(()=>{});
+          clkSeek(0);
+          clkPlay();
           songStarted=true;
         }
-      } else if(songAudio.ended){ // pesnička skončila — už nezačína znova
+      } else if(clkEnded()){ // pesnička skončila — už nezačína znova
         finishSong();
         return;
       } else {
-        songTa=songAudio.currentTime;
+        songTa=clkTime();
       }
       const ta=songTa;
 
@@ -741,7 +1246,14 @@
       let guard=0;
       while(tileSeq<songBeats.length && guard<80){
         const bottomI = mid + (ta - songBeats[tileSeq].t)*vy + blk/2;
-        if(bottomI >= -blk){ const nt=spawnTile(autoLane()); nt.seq=tileSeq; tileSeq++; guard++; }
+        if(bottomI >= -blk){
+          const isLong = tileLen(tileSeq, blk, vy) >= blk*LONG_FACTOR;
+          const nt=spawnTile(autoLane(), undefined, isLong); nt.seq=tileSeq; nt.note=songBeats[tileSeq];
+          if(isTone() && tileStyle==='keys' && nt.note && nt.note.m!=null){
+            nt.art.style.background=PN_COL[PN_WHITE[pianoKeyIndex(nt.note.m)]]; // farba pod\u013ea kl\u00e1vesy piana
+          }
+          tileSeq++; guard++;
+        }
         else break;
       }
 
@@ -758,9 +1270,24 @@
           if(tileStyle==='keys') o.art.style.height=len+'px';
         }
         o.el.style.transform='translate3d(0,'+o.y+'px,0)';
-        if(o.y>vh){ o.dead=true; o.el.classList.add('miss'); misses++; refreshStars(); setTimeout(()=>o.el.remove(),500); }
+        // dlhá nota: počas držania zvýrazni postup a po prejdení celého pásu uzná
+        if(o.long && o.holding && !o.held){
+          const prog=Math.max(0,Math.min(1,(o.y-mid)/len+1));
+          o.lastProg=prog;
+          if(o.fillEl) o.fillEl.style.height=(prog*100)+'%';
+          if(o.y>=mid){ completeHold(o); continue; }
+        }
+        if(!isTone() && o.y>vh){ o.dead=true; o.el.classList.add('miss'); misses++; refreshStars(); setTimeout(()=>o.el.remove(),500); }
       }
       tiles=tiles.filter(o=>o.el.isConnected);
+      // DLAŽDICE-NOTY: ak netťuknutá dlaždica dôjde úplne dole, zastav celú hru a čakaj na ťuknutie
+      if(isTone()){
+        let blocker=null;
+        for(const o of tiles){ if(o.hit||o.dead||o.holding) continue; if(o.y+o.h>=vh-4){ blocker=o; break; } }
+        for(const o of tiles){ if(o.hit||o.dead) continue; o.el.classList.toggle('waitpulse', !!(blocker && !o.holding && o.y+o.h>=vh-4)); }
+        if(blocker && !waiting){ waiting=true; clkPause(); }
+        else if(!blocker && waiting){ waiting=false; clkPlay(); }
+      }
       updateProgress();
       updateGapCountdown(ta);
       updateEndConfetti(ta);
@@ -773,8 +1300,17 @@
   function prepareStage(){
     score=0; misses=0; resetStarRow(); finished=false;
     hideConfetti();
-    tiles.forEach(o=>o.el.remove()); tiles=[];
-    buildLanes();
+    waiting=false;
+    tiles.forEach(o=>{stopHoldTone(o);o.el.remove();}); tiles=[];
+    if(gameMode==='piano'){
+      document.getElementById('lanes').style.display='none';
+      document.getElementById('pianoStage').style.display='block';
+      buildPiano();
+    } else {
+      document.getElementById('lanes').style.display='';
+      document.getElementById('pianoStage').style.display='none';
+      buildLanes();
+    }
     menu.style.display='none';
     pause.style.display='none';
     stage.style.display='block';
@@ -793,16 +1329,32 @@
     // rýchlosť podľa NAJKRATŠIEHO odstupu taktov — dlaždice tak nikdy nesplynú
     // a hustejšie pesničky padajú svižnejšie. Sync je vždy presný (reálne časy taktov).
     let minGap=Infinity;
-    for(let i=1;i<songBeats.length;i++) minGap=Math.min(minGap, songBeats[i].t-songBeats[i-1].t);
+    for(let i=1;i<songBeats.length;i++){ const g=songBeats[i].t-songBeats[i-1].t; if(g>0.03) minGap=Math.min(minGap,g); }
     if(!isFinite(minGap)||minGap<=0) minGap=0.45;
     fallSpeedTime=Math.max(0.16, Math.min(0.5, minGap));
     lastLane=-1; tileSeq=0;
     ensureAudio(); // triangel + presné hodiny
-    songAudio.src=data.audioUrl;
-    songAudio.loop=false; // cyklus riešime sami (kvôli predstihu)
-    try{ songAudio.pause(); songAudio.currentTime=0; }catch(e){}
+    mode = detectTones(data) ? 'tones' : 'mp3';
+    gameMode = (mode==='tones' && gameChoice==='piano') ? 'piano' : 'tiles';
+    speedLevel = (mode==='tones' || gameChoice==='spev') ? 2 : 3; // tóny + HLAS štart na 2; MP3 na originálnej (3)
+    songRate = (mode==='tones') ? (SPEED_RATE[speedLevel]||1) : 1;
+    showSpeedLive();
+    if(toneP){ toneP.destroy(); toneP=null; }
+    if(mode==='tones'){
+      toneP=buildTonePlayer(data);
+      try{ songAudio.pause(); }catch(e){}
+      keepAliveOn(); // iOS: drž session v playback, aby tóny boli počuť aj pri stíšení
+    } else {
+      keepAliveOff(); // MP3 si session drží samo
+      songAudio.src=data.audioUrl;
+      songAudio.loop=false; // cyklus riešime sami (kvôli predstihu)
+      try{ songAudio.preservesPitch=true; songAudio.mozPreservesPitch=true; songAudio.webkitPreservesPitch=true; }catch(e){}
+      try{ songAudio.playbackRate=MP3_RATE[speedLevel]||1; }catch(e){}
+      try{ songAudio.pause(); songAudio.currentTime=0; }catch(e){}
+    }
     prepareStage();
     progDone=false; setProgress(0);
+    if(gameMode==='piano'){ startPianoCountdown(); return; }
     // predstih: kým prvá dlaždica doletí zhora do stredu (len ak prvý takt príde skôr)
     const {block}=tileSize();
     leadIn=(hitLineY() + block/2)/fallVy();
@@ -815,6 +1367,22 @@
   // Hudba aj hra idú HNEĎ, ale až keď audio NAOZAJ začne hrať (nečakáme s frozen
   // obrazovkou na buffer). Kým sa pesnička načítava, stopky ukazujú „načítavam".
   // Audio je potom hlavné hodiny → presný sync.
+  function launchRun(firstT){
+    countdownEl.classList.remove('loading');
+    running=true; lastTime=0;
+    raf=requestAnimationFrame(loop);
+    countingDown=true;
+    let lastShown=-1;
+    (function step(){
+      if(!countingDown) return;
+      const remain=firstT-(clkTime()||0);
+      if(remain<=0){ countingDown=false; countdownEl.classList.remove('show'); return; }
+      const ci=Math.ceil(remain);
+      if(ci!==lastShown){ lastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
+      countdownRaf=requestAnimationFrame(step);
+    })();
+  }
+
   function startCountdown(){
     cancelAnimationFrame(raf);
     cancelAnimationFrame(countdownRaf);
@@ -824,30 +1392,21 @@
     countdownEl.classList.add('show','loading');
     countNum.textContent='';
     songStarted=true;
-
-    let begun=false;
     const firstT=songBeats.length?songBeats[0].t:0;
 
-    function begin(){
-      if(begun||cdAborted) return; begun=true;
-      cleanup();
-      countdownEl.classList.remove('loading');
-      // rozbehni hru (audio už reálne hrá → currentTime sa hýbe)
-      running=true; lastTime=0;
+    // TÓNY (DLAŽDICE): žiadne úvodné stopky — spusti rovno, dlaždice padajú hneď
+    if(isTone()){
+      if(actx&&actx.state==='suspended') actx.resume();
+      clkSeek(0); clkPlay();
+      countdownEl.classList.remove('show','loading');
+      running=true; lastTime=0; countingDown=false;
       raf=requestAnimationFrame(loop);
-      // overlay stopiek: čas do príchodu prvej dlaždice
-      countingDown=true;
-      let lastShown=-1;
-      (function step(){
-        if(!countingDown) return;
-        const remain=firstT-(songAudio.currentTime||0);
-        if(remain<=0){ countingDown=false; countdownEl.classList.remove('show'); return; }
-        const ci=Math.ceil(remain);
-        if(ci!==lastShown){ lastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
-        countdownRaf=requestAnimationFrame(step);
-      })();
+      return;
     }
 
+    // MP3: počkaj, kým audio reálne začne hrať (hlavné hodiny)
+    let begun=false;
+    function begin(){ if(begun||cdAborted) return; begun=true; cleanup(); launchRun(firstT); }
     function onPlaying(){ begin(); }
     function onTime(){ if((songAudio.currentTime||0)>0) begin(); }
     function cleanup(){
@@ -880,7 +1439,7 @@
       if(!res.ok) throw 0;
       const items=await res.json();
       const jsons=Array.isArray(items)? items.filter(it=>it.type==='file' && /\.json$/i.test(it.name)) : [];
-      if(!jsons.length){ songSelect.innerHTML='<option value="">— žiadne pesničky —</option>'; setSongStatus('Zatiaľ tu nie sú žiadne pesničky. Priprav ich v <a href="Editor.html">Editore</a>.'); return; }
+      if(!jsons.length){ songSelect.innerHTML='<option value="">— žiadne pesničky —</option>'; setSongStatus('Zatiaľ tu nie sú žiadne pesničky. Priprav ich v <a href="Editor.html">Editore</a> alebo <a href="Convertor.html">Convertore</a>.'); return; }
       jsons.sort((a,b)=>a.name.localeCompare(b.name,'sk'));
       songSelect.innerHTML='';
       for(const it of jsons){
@@ -890,7 +1449,7 @@
         songSelect.appendChild(opt);
         // dotažné načítanie pekného názvu + predpríprava dát
         fetch(bust(it.download_url),{cache:'no-store'}).then(r=>r.json()).then(d=>{
-          if(d && d.audioUrl && Array.isArray(d.beats)){ songCache[it.download_url]=d; if(d.title) opt.textContent=d.title; }
+          if(d && Array.isArray(d.beats) && (d.audioUrl || detectTones(d))){ songCache[it.download_url]=d; if(d.title) opt.textContent=d.title; updateSpeedVisibility(); }
         }).catch(()=>{});
       }
     }catch(e){
@@ -906,7 +1465,18 @@
   function primeAudio(){
     if(audioPrimed) return;
     audioPrimed=true;
-    try{ if(actx && actx.state==='suspended') actx.resume(); }catch(e){}
+    // KĽÚČOVÉ pre iOS Safari: AudioContext treba VYTVORIŤ aj odomknúť priamo
+    // v geste (ťuknutí). Inak ostane utlmený a tónový (Web Audio) režim je ticho,
+    // hoci MP3 (cez <audio>) hrá. Preto kontext založíme tu, hneď ho rozbehneme
+    // a "odpálime" krátky tichý buffer — to je štandardný iOS unlock.
+    try{
+      ensureAudio();
+      if(actx.state==='suspended') actx.resume();
+      const b=actx.createBuffer(1,1,22050);
+      const s=actx.createBufferSource(); s.buffer=b; s.connect(actx.destination); s.start(0);
+    }catch(e){}
+    // odomkni aj tichý keep-alive (iOS unmute trik) v rámci toho istého gesta
+    try{ ensureKeepAlive(); const kp=keepAlive.play(); if(kp&&kp.then) kp.then(()=>{ try{ keepAlive.pause(); keepAlive.currentTime=0; }catch(e){} }).catch(()=>{}); }catch(e){}
     // odomkni aj potleskový <audio> v rámci toho istého gesta (inak ho autoplay
     // politika na konci pesničky zablokuje a potlesk nezaznie)
     try{
@@ -931,8 +1501,28 @@
     const url=songSelect.value;
     if(!url){ setSongStatus('Najprv vyber pesničku.'); return; }
     primeAudio(); // ODOMKNUTIE zvuku v geste ťuknutia (pred async načítaním)
-    if(songCache[url]){ setSongStatus(''); startSong(songCache[url]); return; }
+    const cached=songCache[url];
+    // SPEV: namiesto tónov spusti padajúce dlaždice na spievanú MP3 z odkazu songUrl
+    if(gameChoice==='spev' && cached && cached.songUrl){ loadSpev(cached); return; }
+    if(cached){ setSongStatus(''); startSong(cached); return; }
     playFromUrl(url);
+  }
+
+  // Načíta spievanú verziu (súbor z songUrl — MP3 beatmapa) a spustí padajúce dlaždice.
+  async function loadSpev(parent){
+    setSongStatus('Načítavam spev…');
+    try{
+      const res=await fetch(bust(parent.songUrl),{cache:'no-store'});
+      if(!res.ok) throw 0;
+      const data=await res.json();
+      if(!Array.isArray(data.beats) || !data.beats.length) throw 0;
+      if(!data.audioUrl && !detectTones(data)) throw 0;
+      if(!data.title && parent.title) data.title=parent.title; // prevezmi názov z rodiča
+      setSongStatus('');
+      startSong(data);
+    }catch(e){
+      setSongStatus('Spev sa nepodarilo načítať.');
+    }
   }
 
   async function playFromUrl(url){
@@ -941,7 +1531,8 @@
       const res=await fetch(bust(url),{cache:'no-store'});
       if(!res.ok) throw 0;
       const data=await res.json();
-      if(!data.audioUrl || !Array.isArray(data.beats) || !data.beats.length) throw 0;
+      if(!Array.isArray(data.beats) || !data.beats.length) throw 0;
+      if(!data.audioUrl && !detectTones(data)) throw 0;
       songCache[url]=data;
       setSongStatus('');
       startSong(data);
@@ -954,7 +1545,9 @@
     if(finished) return;
     running=false; cancelAnimationFrame(raf);
     cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading'); hideConfetti();
-    songAudio.pause();
+    clkPause();
+    tiles.forEach(o=>stopHoldTone(o));
+    if(PN&&PN.holding) PN.holding.pressed=false;
     document.getElementById('pauseTitle').style.display='';
     document.getElementById('pauseScore').style.display='';
     document.getElementById('pauseTitle').innerHTML='<span class="b">Pauza</span>';
@@ -967,10 +1560,11 @@
     finished=true;
     running=false; cancelAnimationFrame(raf);
     cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading');
-    try{ songAudio.pause(); }catch(e){}
-    tiles.forEach(o=>o.el.remove()); tiles=[];
+    try{ clkPause(); }catch(e){}
+    tiles.forEach(o=>{stopHoldTone(o);o.el.remove();}); tiles=[];
     // potlesk zaznie HNEĎ na konci; konfety bežia ďalej; popup až keď potlesk doznie
     confettiEl.classList.add('show');
+    clearPiano();
 
     function showEndPopup(){
       hideConfetti();
@@ -1012,17 +1606,19 @@
   function resumeGame(){
     pause.style.display='none';
     if(actx&&actx.state==='suspended') actx.resume();
+    if(isTone()) keepAliveOn(); // iOS: obnov tich\u00fd keep-alive
     running=true; lastTime=0;
-    songAudio.play().catch(()=>{}); // ta=audio.currentTime -> sync sa obnoví sám
+    clkPlay(); // ta=clkTime() -> sync sa obnoví sám
+    waiting=false; // znova vyhodnotí čakanie v slučke
     raf=requestAnimationFrame(loop);
     // ak prvá dlaždica ešte neprišla, znova ukáž stopky
     const firstT=songBeats.length?songBeats[0].t:0;
-    if((songAudio.currentTime||0)<firstT && !countingDown){
+    if((clkTime()||0)<firstT && !countingDown && gameMode!=='piano' && !isTone()){
       countingDown=true; countdownEl.classList.add('show');
       let lastShown=-1;
       (function step(){
         if(!countingDown) return;
-        const remain=firstT-(songAudio.currentTime||0);
+        const remain=firstT-(clkTime()||0);
         if(remain<=0){ countingDown=false; countdownEl.classList.remove('show'); return; }
         const ci=Math.ceil(remain);
         if(ci!==lastShown){ lastShown=ci; countNum.textContent=ci; countNum.classList.remove('tick'); void countNum.offsetWidth; countNum.classList.add('tick'); }
@@ -1033,10 +1629,18 @@
   function goMenu(){
     running=false; cancelAnimationFrame(raf);
     cdAborted=true; countingDown=false; gapActive=false; cancelAnimationFrame(countdownRaf); countdownEl.classList.remove('show','loading'); hideConfetti();
-    songAudio.pause();
+    clkPause();
+    if(toneP){ toneP.destroy(); toneP=null; }
+    keepAliveOff();
+    clearPiano(); PN=null; gameMode='tiles';
+    document.getElementById('pianoStage').style.display='none';
+    document.getElementById('lanes').style.display='';
+    document.getElementById('speedLive').style.display='none';
+    waiting=false;
+    mode='mp3';
     songMode=false; finished=false;
     { const tt=document.getElementById('toolbarTitle'); if(tt) tt.textContent='PESNIČKY PRE DETI'; }
-    tiles.forEach(o=>o.el.remove()); tiles=[];
+    tiles.forEach(o=>{stopHoldTone(o);o.el.remove();}); tiles=[];
     pause.style.display='none';
     stage.style.display='none';
     menu.style.display='flex';
@@ -1100,11 +1704,70 @@
   window.addEventListener('resize',syncToolbarH);
 
   // výber pesničky + ŠTART
+  const gameGroup=document.getElementById('gameGroup');
+  const gameChoices=document.getElementById('gameChoices');
+  const spevChoice=document.getElementById('spevChoice');
+  function selectGameChoice(g){
+    gameChoice=g||'tiles';
+    [...gameChoices.querySelectorAll('.choice')].forEach(x=>x.classList.toggle('sel', x.dataset.game===gameChoice));
+  }
+  gameChoices.addEventListener('click',e=>{
+    const b=e.target.closest('.choice'); if(!b) return;
+    selectGameChoice(b.dataset.game||'tiles');
+  });
+  // PC klávesy pre mód PIANO
+  const pnDownKeys=new Set();
+  window.addEventListener('keydown',e=>{ if(gameMode!=='piano') return;
+    const i=PN_PC.indexOf(e.key.toLowerCase());
+    if(i>=0){ e.preventDefault(); if(!pnDownKeys.has(i)){ pnDownKeys.add(i); pianoPress(i); } } });
+  window.addEventListener('keyup',e=>{ const i=PN_PC.indexOf(e.key.toLowerCase());
+    if(i>=0){ pnDownKeys.delete(i); pianoRelease(i); } });
+  function updateSpeedVisibility(){
+    const d=songCache[songSelect.value];
+    const t=!!(d && detectTones(d));
+    const hasSpev=!!(d && d.songUrl);            // pieseň má odkaz na spievanú (mp3) verziu
+    gameGroup.style.display=(t||hasSpev)?'':'none';
+    if(spevChoice) spevChoice.style.display=hasSpev?'':'none';
+    // ak aktuálne vybraná voľba už pre túto pesničku neexistuje, vráť sa na Dlaždice
+    if((gameChoice==='spev' && !hasSpev) || (gameChoice==='piano' && !t)) selectGameChoice('tiles');
+  }
+  // živý prepínač tempa počas hry (1-2-3) — dlaždice aj piano
+  const speedLive=document.getElementById('speedLive');
+  function syncSpeedButtons(){
+    [...speedLive.querySelectorAll('button')].forEach(x=>x.classList.toggle('sel', +x.dataset.spd===speedLevel));
+  }
+  function setSpeedLive(level){
+    speedLevel=level||2; syncSpeedButtons();
+    if(gameMode==='piano'){ applyPianoSpeed(); }
+    else if(isTone()){ const w=clkTime(); songRate=SPEED_RATE[speedLevel]||1; if(toneP) toneP.seek(w); }
+    else { try{ songAudio.playbackRate=MP3_RATE[speedLevel]||1; }catch(e){} }
+  }
+  speedLive.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; setSpeedLive(parseInt(b.dataset.spd,10)||2); });
+  function showSpeedLive(){ speedLive.style.display='flex'; syncSpeedButtons(); }
+  songSelect.addEventListener('change',updateSpeedVisibility);
   document.getElementById('refreshSongs').addEventListener('click',fetchSongList);
   document.getElementById('startBtn').addEventListener('click',startSelected);
-  songAudio.addEventListener('error',()=>{ if(songMode&&songAudio.src) setSongStatus('Pesničku (MP3) sa nepodarilo prehrať — skontroluj odkaz v beatmape.'); });
+  songAudio.addEventListener('error',()=>{ if(songMode&&!isTone()&&songAudio.src) setSongStatus('Pesničku (MP3) sa nepodarilo prehrať — skontroluj odkaz v beatmape.'); });
   (function(){
-    const q=new URLSearchParams(location.search).get('song');
+    const params=new URLSearchParams(location.search);
+    // skúšobná pesnička z Convertora (cez localStorage) — čaká na gésto ŠTART
+    if(params.get('try')){
+      try{
+        const raw=localStorage.getItem('musictiles_tryout');
+        const data=raw?JSON.parse(raw):null;
+        if(data && Array.isArray(data.beats) && data.beats.length){
+          const opt=document.createElement('option');
+          opt.value='__tryout__';
+          opt.textContent='▶ '+((data.title||'Skúšobná pesnička'))+' (z Convertora)';
+          songSelect.innerHTML=''; songSelect.appendChild(opt);
+          songCache['__tryout__']=data;
+          setSongStatus('Skúšobná pesnička z Convertora je pripravená — stlač ŠTART.');
+          updateSpeedVisibility();
+          return;
+        }
+      }catch(e){}
+    }
+    const q=params.get('song');
     if(q){ playFromUrl(q); } else { fetchSongList(); }
   })();
 
