@@ -174,6 +174,10 @@
   @media (max-width:420px){
     .eda-toolbar__left{display:none;}
   }
+  /* prepínanie ikony celá obrazovka ↔ zmenšiť */
+  #fsBtn .fs-ico--compress{display:none;}
+  #fsBtn.is-fs .fs-ico--expand{display:none;}
+  #fsBtn.is-fs .fs-ico--compress{display:inline-block;}
 
   /* ---------- horná lišta hry (pod toolbarom) ---------- */
   .topbar{position:absolute;top:calc(var(--toolbar-h) + 10px);left:0;right:0;z-index:5;display:flex;
@@ -395,7 +399,8 @@
   <div class="eda-toolbar__right">
     <button class="eda-icon-btn" id="soundBtn" aria-label="Zvuk"></button>
     <button class="eda-icon-btn" id="fsBtn" aria-label="Celá obrazovka">
-      <svg viewBox="0 0 24 24" width="30" height="30"><defs><g id="fsArrow"><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="var(--paperColor,#fff)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></defs><use href="#fsArrow" style="transform: rotate(90deg) translate(12.5px, 4.5px); transform-origin: 16px 8px"></use><use href="#fsArrow" style="transform: rotate(-90deg) translate(4.5px, 12.5px); transform-origin: 8px 16px"></use></svg>
+      <svg class="fs-ico fs-ico--expand" viewBox="0 0 24 24" width="30" height="30"><defs><g id="fsArrow"><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="var(--paperColor,#fff)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M0 7L0 0L7 0M0 0 L5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></defs><use href="#fsArrow" style="transform: rotate(90deg) translate(12.5px, 4.5px); transform-origin: 16px 8px"></use><use href="#fsArrow" style="transform: rotate(-90deg) translate(4.5px, 12.5px); transform-origin: 8px 16px"></use></svg>
+      <svg class="fs-ico fs-ico--compress" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3L9 9L3 9"></path><path d="M15 3L15 9L21 9"></path><path d="M9 21L9 15L3 15"></path><path d="M15 21L15 15L21 15"></path></g></svg>
     </button>
     <button class="eda-icon-btn eda-icon-btn--danger" id="closeBtn" aria-label="Späť do menu">
       <svg viewBox="0 0 29 29" width="24" height="24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.4125 14.2022L6.48107 8.27086C6.1511 7.9409 5.96582 7.49337 5.96582 7.02673C5.96582 6.56009 6.1511 6.11257 6.48107 5.7826C6.81103 5.45264 7.25856 5.26727 7.7252 5.26727C8.19183 5.26727 8.63936 5.45264 8.96933 5.7826L14.9008 11.714L20.8309 5.7826C21.1608 5.45264 21.6084 5.26727 22.075 5.26727C22.5416 5.26727 22.9892 5.45264 23.3191 5.7826C23.6491 6.11257 23.8344 6.56009 23.8344 7.02673C23.8344 7.49337 23.6491 7.9409 23.3191 8.27086L17.3877 14.2022L23.3191 20.1336C23.6491 20.4636 23.8344 20.9111 23.8344 21.3778C23.8344 21.8444 23.6491 22.2919 23.3191 22.6219C22.9892 22.9519 22.5416 23.1372 22.075 23.1372C21.6084 23.1372 21.1608 22.9519 20.8309 22.6219L14.9008 16.6905L8.96933 22.6219C8.63936 22.9519 8.19183 23.1372 7.7252 23.1372C7.25856 23.1372 6.81103 22.9519 6.48107 22.6219C6.1511 22.2919 5.96582 21.8444 5.96582 21.3778C5.96582 20.9111 6.1511 20.4636 6.48107 20.1336L12.4125 14.2022Z" fill="currentColor"></path></svg>
@@ -1693,6 +1698,14 @@
     if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen||function(){}).call(document.documentElement); }
     else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
   });
+  // po vstupe/výstupe z celej obrazovky prepni ikonu (rozšíriť ↔ zmenšiť)
+  function syncFsBtn(){
+    const on=!!(document.fullscreenElement||document.webkitFullscreenElement);
+    fsBtn.classList.toggle('is-fs',on);
+    fsBtn.setAttribute('aria-label', on?'Zmenšiť':'Celá obrazovka');
+  }
+  document.addEventListener('fullscreenchange',syncFsBtn);
+  document.addEventListener('webkitfullscreenchange',syncFsBtn);
 
   document.getElementById('closeBtn').addEventListener('click',()=>{
     if(menu.style.display!=='none' && stage.style.display==='none'){
