@@ -878,14 +878,23 @@
 
   // Dĺžka dlaždice (len pre KLÁVESY): natiahne sa nahor až po ďalšiu dlaždicu,
   // takže väčšie medzery medzi taktami = dlhšie klávesy — ale nikdy sa neprekryjú.
+  // Či je takt DLHÁ nota (na podržanie). Uprednostní uloženú hodnotu zo .song (b.long);
+  // ak chýba (staršie súbory / tónový zápis), použije pôvodný odhad podľa medzery k ďalšiemu taktu.
+  function beatLong(seq){
+    const b=songBeats[seq];
+    if(b && typeof b.long==='boolean') return b.long;
+    const dtNext = (seq+1 < songBeats.length) ? (songBeats[seq+1].t - songBeats[seq].t) : fallSpeedTime;
+    return dtNext >= LONG_FACTOR*fallSpeedTime;
+  }
   function tileLen(seq, block, vy){
     if(tileStyle!=='keys') return block;            // ikony nechávame v pôvodnej veľkosti
+    if(!beatLong(seq)) return block;                // krátka nota → základný blok
     let dtNext = (seq+1 < songBeats.length)
       ? (songBeats[seq+1].t - songBeats[seq].t)
       : fallSpeedTime;                              // posledná dlaždica: štandard
     const gap = dtNext*vy;                          // medzera po ďalšiu dlaždicu (bez prekrytia)
     const maxLen = Math.min(window.innerHeight*0.5, block*2.6);
-    return Math.max(block, Math.min(maxLen, gap));
+    return Math.max(block*LONG_FACTOR, Math.min(maxLen, gap)); // dlhá → vždy čitateľne natiahnutá
   }
 
   function spawnTile(laneIndex, atY, isLong){
@@ -1278,7 +1287,7 @@
       while(tileSeq<songBeats.length && guard<80){
         const bottomI = mid + (ta - songBeats[tileSeq].t)*vy + blk/2;
         if(bottomI >= -blk){
-          const isLong = tileLen(tileSeq, blk, vy) >= blk*LONG_FACTOR;
+          const isLong = (tileStyle==='keys') && beatLong(tileSeq);
           const nt=spawnTile(autoLane(), undefined, isLong); nt.seq=tileSeq; nt.note=songBeats[tileSeq];
           if(isTone() && tileStyle==='keys' && nt.note && nt.note.m!=null){
             nt.art.style.background=PN_COL[PN_WHITE[pianoKeyIndex(nt.note.m)]]; // farba pod\u013ea kl\u00e1vesy piana
