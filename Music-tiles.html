@@ -288,14 +288,11 @@
   .title{font-weight:900;line-height:1.02;font-size:clamp(40px,8vw,76px);margin:0 0 6px;letter-spacing:-.01em;}
   .title .a{color:var(--primaryColor);}.title .b{color:var(--color-green-300);}.title .c{color:var(--color-orange-700);}
   .subtitle{font-size:clamp(18px,3.2vw,24px);color:var(--descriptionColor);margin:0 0 26px;font-weight:500;}
-  /* banner so získanými pesničkami (po dohraní hry) */
-  .wonbanner{display:flex;align-items:center;justify-content:center;gap:10px;
-    margin:0 0 22px;padding:12px 22px;border-radius:18px;
+  /* banner s hviezdičkami z posledného kola (po dohraní hry) */
+  .wonbanner{display:flex;align-items:center;justify-content:center;
+    margin:0 0 22px;padding:10px 22px;border-radius:18px;
     background:linear-gradient(180deg,#fff6df,#ffeec0);border:2px solid #ffd97a;
     box-shadow:0 4px 12px rgba(217,149,0,.18);}
-  .wonbanner .won-ico{display:flex;animation:bump .6s ease;}
-  .wonbanner .won-text{font-size:clamp(17px,3vw,21px);font-weight:700;color:#9a6a00;}
-  .wonbanner .won-text strong{font-size:1.25em;color:#d99500;}
   .wonbanner .won-stars{display:inline-flex;gap:3px;}
   .wonbanner .won-stars svg{width:30px;height:30px;display:block;animation:bump .6s ease;}
 
@@ -1604,7 +1601,7 @@
 
     function showEndPopup(){
       hideConfetti();
-      // bez obrazovky „Hrať znova“ — rovno späť do menu s počtom získaných pesničiek
+      // bez obrazovky „Hrať znova“ — rovno späť do menu (hore sa zobrazia hviezdičky z kola)
       goMenu();
     }
 
@@ -1709,10 +1706,7 @@
   cols=3; // pevne 3 stĺpce
 
   document.getElementById('homeBtn').addEventListener('click',pauseGame);
-  document.getElementById('resumeBtn').addEventListener('click',()=>{
-    if(finished){ finished=false; if(songData) startSong(songData); }
-    else resumeGame();
-  });
+  document.getElementById('resumeBtn').addEventListener('click',resumeGame);
   document.getElementById('toMenuBtn').addEventListener('click',goMenu);
 
   /* ====================== eduAlf TOOLBAR ====================== */
